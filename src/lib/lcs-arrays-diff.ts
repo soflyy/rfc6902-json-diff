@@ -2,6 +2,7 @@ import type { ComparableArray, RFC6902 } from "../types";
 import { diffUnknownValues } from "./diff";
 import { joinPathWith } from "./util";
 import bestSubSequence from "fast-array-diff/dist/diff/lcs";
+import equal from "fast-deep-equal";
 
 export type PatchItem<T> = {
   type: "add" | "remove";
@@ -15,7 +16,8 @@ export type GetPatchOutput<T> = Array<PatchItem<T> | RFC6902.Operation<T>>;
 export function getPatch<T>(
   a: T[],
   b: T[],
-  compareFunc: (ia: T, ib: T) => boolean = (ia: T, ib: T) => ia === ib
+  compareFunc: (ia: T, ib: T) => boolean = (ia: T, ib: T) => ia === ib,
+  path: string
 ): GetPatchOutput<T> {
   const patch: GetPatchOutput<T> = [];
 
@@ -155,11 +157,7 @@ export function diffArraysUsingLcs(
   rightArr: ComparableArray,
   path: string = ""
 ): RFC6902.Operation[] {
-  const lcsBasedPatch = getPatch(leftArr, rightArr, (left, right) => {
-    const diff = diffUnknownValues(left, right);
-
-    return !diff.length;
-  });
+  const lcsBasedPatch = getPatch(leftArr, rightArr, equal, path);
 
   const lcsBasedOperations: RFC6902.Operation[] = [];
 

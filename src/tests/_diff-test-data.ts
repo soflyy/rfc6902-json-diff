@@ -427,7 +427,7 @@ export const arrayCasesInsideNestedObjectProperty: DiffTestCase[] = [
   })),
 }));
 
-const otherCasesInsideMultidimensionalArrays: DiffTestCase[] = [
+export const otherCasesInsideMultidimensionalArrays: DiffTestCase[] = [
   ...objectCases,
   ...singleDimensionalArrayOfPrimitivesCases,
   ...arrayCasesInsideObjectProperty,
