@@ -24,12 +24,6 @@
     "patch": [],
     "expected": {"foo":{"bar":2, "foo": 1}} },
 
-
-  { "comment": "toplevel array",
-    "doc": [],
-    "patch": [{"op": "add", "path": "/0", "value": "foo"}],
-    "expected": ["foo"] },
-
   { "comment": "toplevel array, no change",
     "doc": ["foo"],
     "patch": [],
