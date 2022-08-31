@@ -1,0 +1,160 @@
+import type { ComparableArray, RFC6902 } from "../types";
+import type { Patch, PatchItem } from "fast-array-diff";
+import { diffUnknownValues } from "./diff";
+import { joinPathWith } from "./util";
+import bestSubSequence from "fast-array-diff/dist/diff/lcs";
+
+export function getPatch<T>(
+  a: T[],
+  b: T[],
+  compareFunc: (ia: T, ib: T) => boolean = (ia: T, ib: T) => ia === ib
+): Patch<T> {
+  const patch: Patch<T> = [];
+  let lastAdd: PatchItem<T> | null = null;
+  let lastRemove: PatchItem<T> | null = null;
+
+  function pushChange(
+    type: "add" | "remove" | "same",
+    oldArr: T[],
+    oldStart: number,
+    oldEnd: number,
+    newArr: T[],
+    newStart: number,
+    newEnd: number
+  ) {
+    // console.log(type, oldStart, oldEnd, newStart, newEnd, oldArr);
+    if (type === "same") {
+      if (lastRemove) {
+        patch.push(lastRemove);
+      }
+      if (lastAdd) {
+        patch.push(lastAdd);
+      }
+      lastRemove = null;
+      lastAdd = null;
+    } else if (type === "remove") {
+      if (!lastRemove) {
+        lastRemove = {
+          type: "remove",
+          oldPos: oldStart as number,
+          newPos: newStart as number,
+          items: [],
+        };
+      }
+      for (let i = oldStart; i < oldEnd; ++i) {
+        lastRemove.items.push(oldArr[i]);
+      }
+    } else if (type === "add") {
+      if (!lastAdd) {
+        lastAdd = {
+          type: "add",
+          oldPos: oldStart,
+          newPos: newStart,
+          items: [],
+        };
+      }
+      for (let i = newStart; i < newEnd; ++i) {
+        lastAdd.items.push(newArr[i]);
+      }
+    }
+  }
+  // console.log("–––––––––––––START–––––––––––––––––");
+
+  bestSubSequence(a, b, compareFunc, pushChange);
+
+  pushChange("same", [], 0, 0, [], 0, 0);
+  // console.log("–––––––––––––END–––––––––––––––––");
+
+  return patch;
+}
+
+export function diffArraysUsingLcs(
+  leftArr: ComparableArray,
+  rightArr: ComparableArray,
+  path: string = ""
+): RFC6902.Operation[] {
+  const lcsBasedPatch = getPatch(leftArr, rightArr, (left, right) => {
+    const diff = diffUnknownValues(left, right);
+
+    return !diff.length;
+  });
+
+  const lcsBasedOperations: RFC6902.Operation[] = [];
+  let addIndexShift = 0;
+  let removeIndexShift = 0;
+
+  console.log(lcsBasedPatch);
+
+  for (const lcsPatchItem of lcsBasedPatch) {
+    if (lcsPatchItem.type === "add") {
+      lcsBasedOperations.push(
+        ...lcsPatchItem.items.map(
+          (lcsPatchItemValue, lcsPatchItemIdx): RFC6902.Operation => ({
+            op: "add",
+            value: lcsPatchItemValue,
+            path: joinPathWith(
+              path,
+              lcsPatchItem.oldPos +
+                lcsPatchItemIdx +
+                addIndexShift -
+                removeIndexShift
+            ),
+          })
+        )
+      );
+      addIndexShift += lcsPatchItem.items.length;
+    } else if (lcsPatchItem.type === "remove") {
+      lcsBasedOperations.push(
+        ...lcsPatchItem.items.map(
+          (_lcsPatchItemValue): RFC6902.Operation => ({
+            op: "remove",
+            path: joinPathWith(
+              path,
+              lcsPatchItem.oldPos + addIndexShift - removeIndexShift
+            ),
+          })
+        )
+      );
+      removeIndexShift += lcsPatchItem.items.length;
+    }
+  }
+
+  // const detectReplacesMap: Record<
+  //   RFC6902.Operation["path"],
+  //   { add?: RFC6902.AddOperation; remove?: RFC6902.RemoveOperation }
+  // > = {};
+  //
+  // for (const operation of lcsBasedOperations) {
+  //   if (operation.op === "add" || operation.op === "remove") {
+  //     detectReplacesMap[operation.path] = {
+  //       ...detectReplacesMap[operation.path],
+  //       [operation.op]: operation,
+  //     };
+  //   }
+  // }
+  //
+  // for (let i = lcsBasedOperations.length - 1; i >= 0; i--) {
+  //   const operation = lcsBasedOperations[i];
+  //
+  //   if (
+  //     (operation.op === "add" || operation.op === "remove") &&
+  //     operation.path in detectReplacesMap
+  //   ) {
+  //     const replaceMapping = detectReplacesMap[operation.path];
+  //
+  //     if (replaceMapping.add && replaceMapping.remove) {
+  //       if (operation.op === "add") {
+  //         lcsBasedOperations[i] = {
+  //           op: "replace",
+  //           path: operation.path,
+  //           value: replaceMapping.add.value,
+  //         };
+  //       } else if (operation.op === "remove") {
+  //         lcsBasedOperations.splice(i, 1);
+  //       }
+  //     }
+  //   }
+  // }
+
+  return lcsBasedOperations;
+}
