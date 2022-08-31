@@ -10,9 +10,7 @@ export type PatchItem<T> = {
   items: T[];
 };
 
-export type GetPatchOutput<T> = Array<
-  PatchItem<T> | RFC6902.ReplaceOperation<T>
->;
+export type GetPatchOutput<T> = Array<PatchItem<T> | RFC6902.Operation<T>>;
 
 export function getPatch<T>(
   a: T[],
@@ -23,7 +21,7 @@ export function getPatch<T>(
 
   let lastAdd: PatchItem<T> | null = null;
   let lastRemove: PatchItem<T> | null = null;
-  let replaces: RFC6902.ReplaceOperation[] = [];
+  let replaces: RFC6902.Operation[] = [];
 
   let addIdxShift = 0;
   let removeIdxShift = 0;
@@ -67,11 +65,23 @@ export function getPatch<T>(
           const item = lastAdd.items.shift();
           if (item) {
             addIdxShift--;
-            replaces.push({
-              op: "replace",
-              path: String(oldStart + rIdx),
-              value: item,
-            });
+
+            const oldValue = oldArr[i];
+            const newValue = item;
+
+            const deepReplacesPathPrefix = String(oldStart + rIdx);
+            const deepReplaces = diffUnknownValues(
+              oldValue,
+              newValue,
+              deepReplacesPathPrefix
+            );
+
+            replaces.push(
+              ...deepReplaces.map((deepReplaceOperation) => ({
+                ...deepReplaceOperation,
+              }))
+            );
+
             lastRemove.oldPos++;
           } else {
             lastRemove.items.push(oldArr[i]);
@@ -101,11 +111,23 @@ export function getPatch<T>(
           const item = lastRemove.items.shift();
           if (item) {
             removeIdxShift--;
-            replaces.push({
-              op: "replace",
-              path: String(startIdx + rIdx),
-              value: newArr[i],
-            });
+
+            const oldValue = item;
+            const newValue = newArr[i];
+
+            const deepReplacesPathPrefix = String(startIdx + rIdx);
+            const deepReplaces = diffUnknownValues(
+              oldValue,
+              newValue,
+              deepReplacesPathPrefix
+            );
+
+            replaces.push(
+              ...deepReplaces.map((deepReplaceOperation) => ({
+                ...deepReplaceOperation,
+              }))
+            );
+
             lastAdd.oldPos++;
           } else {
             lastAdd.items.push(newArr[i]);
@@ -161,7 +183,7 @@ export function diffArraysUsingLcs(
           })
         )
       );
-    } else if ("op" in lcsPatchItem && lcsPatchItem.op === "replace") {
+    } else if ("op" in lcsPatchItem) {
       lcsBasedOperations.push({
         ...lcsPatchItem,
         path: joinPathWith(path, lcsPatchItem.path),

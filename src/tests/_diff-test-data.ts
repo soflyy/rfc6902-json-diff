@@ -352,29 +352,7 @@ export const objectCases: DiffTestCase[] = [
   },
 ];
 
-export const singleDimensionalArrayOfPrimitivesCasesInsideObjectProperty: DiffTestCase[] =
-  singleDimensionalArrayOfPrimitivesCases.map((arrayCase) => ({
-    title: `Array Case Inside Object Property: ${arrayCase.title}`,
-    left: { prop: arrayCase.left },
-    right: { prop: arrayCase.right },
-    expected: arrayCase.expected.map((arrayCaseExpectedOp) => ({
-      ...arrayCaseExpectedOp,
-      path: `/prop${arrayCaseExpectedOp.path}`,
-    })),
-  }));
-
-export const singleDimensionalArrayOfPrimitivesCasesInsideNestedObjectProperty: DiffTestCase[] =
-  singleDimensionalArrayOfPrimitivesCases.map((arrayCase) => ({
-    title: `Array Case Inside Nested Object Property: ${arrayCase.title}`,
-    left: { prop: { foo: arrayCase.left } },
-    right: { prop: { foo: arrayCase.right } },
-    expected: arrayCase.expected.map((arrayCaseExpectedOp) => ({
-      ...arrayCaseExpectedOp,
-      path: `/prop/foo${arrayCaseExpectedOp.path}`,
-    })),
-  }));
-
-export const multiDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
+export const multiDimensionalArrayCases: DiffTestCase[] = [
   {
     title: "Replace last element with array",
     left: [1, 2, 3],
@@ -395,19 +373,81 @@ export const multiDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
-    skip: true,
     title: "Replace first element of nested array",
     left: [1, 2, [3, 4]],
     right: [1, 2, [3, 5]],
     expected: [{ op: "replace", path: "/2/1", value: 5 }],
   },
+  {
+    title: "Replace primitive element of deeply nested array",
+    left: [1, 2, [3, 4, [5, [6, 7, 8, 9]], 10]],
+    right: [1, 2, [3, 4, [5, [6, 7, "X", 9]], 10]],
+    expected: [{ op: "replace", path: "/2/2/1/2", value: "X" }],
+  },
+
+  {
+    title: "Change object property of deeply nested array",
+    left: [
+      1,
+      2,
+      [3, 4, [5, [6, 7, { foo: "bar", baz: { x: 0, y: 0 } }, 9]], 10],
+    ],
+    right: [
+      1,
+      2,
+      [3, 4, [5, [6, 7, { foo: "bar", baz: { x: 1, y: 0 } }, 9]], 10],
+    ],
+    expected: [{ op: "replace", path: "/2/2/1/2/baz/x", value: 1 }],
+  },
 ];
+
+export const arrayCasesInsideObjectProperty: DiffTestCase[] = [
+  ...singleDimensionalArrayOfPrimitivesCases,
+  ...multiDimensionalArrayCases,
+].map((arrayCase) => ({
+  title: `Array Case Inside Object Property: ${arrayCase.title}`,
+  left: { prop: arrayCase.left },
+  right: { prop: arrayCase.right },
+  expected: arrayCase.expected.map((arrayCaseExpectedOp) => ({
+    ...arrayCaseExpectedOp,
+    path: `/prop${arrayCaseExpectedOp.path}`,
+  })),
+}));
+
+export const arrayCasesInsideNestedObjectProperty: DiffTestCase[] = [
+  ...singleDimensionalArrayOfPrimitivesCases,
+  ...multiDimensionalArrayCases,
+].map((arrayCase) => ({
+  title: `Array Case Inside Nested Object Property: ${arrayCase.title}`,
+  left: { prop: { foo: arrayCase.left } },
+  right: { prop: { foo: arrayCase.right } },
+  expected: arrayCase.expected.map((arrayCaseExpectedOp) => ({
+    ...arrayCaseExpectedOp,
+    path: `/prop/foo${arrayCaseExpectedOp.path}`,
+  })),
+}));
+
+const otherCasesInsideMultidimensionalArrays: DiffTestCase[] = [
+  ...objectCases,
+  ...singleDimensionalArrayOfPrimitivesCases,
+  ...arrayCasesInsideObjectProperty,
+  ...arrayCasesInsideNestedObjectProperty,
+].map((wrappedCase) => ({
+  title: `Case Inside Multidimensional Array: ${wrappedCase.title}`,
+  left: [1, 2, [3, 4, [5, [6, 7, wrappedCase.left, 9]], 10]],
+  right: [1, 2, [3, 4, [5, [6, 7, wrappedCase.right, 9]], 10]],
+  expected: wrappedCase.expected.map((objectCaseExpectedOp) => ({
+    ...objectCaseExpectedOp,
+    path: `/2/2/1/2${objectCaseExpectedOp.path}`,
+  })),
+}));
 
 export const allCases: DiffTestCase[] = [
   ...objectCases,
   ...singleDimensionalArrayOfPrimitivesCases,
-  ...singleDimensionalArrayOfPrimitivesCasesInsideObjectProperty,
-  ...singleDimensionalArrayOfPrimitivesCasesInsideNestedObjectProperty,
+  ...arrayCasesInsideObjectProperty,
+  ...arrayCasesInsideNestedObjectProperty,
   ...thirdPartyCases,
-  ...multiDimensionalArrayOfPrimitivesCases,
+  ...multiDimensionalArrayCases,
+  ...otherCasesInsideMultidimensionalArrays,
 ];

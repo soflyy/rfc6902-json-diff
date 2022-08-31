@@ -4,9 +4,11 @@
   "description": "RFC6902-compliant JSON diff generator",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "ava",
+    "lint": "eslint"
   },
   "ava": {
+    "timeout": "20s",
     "files": [
       "src/tests/**/*"
     ],
