@@ -1,0 +1,27 @@
+name: CI
+on:
+  [ push ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.JS
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.17.0
+
+      - name: Install NPM Dependencies
+        run: NODE_ENV=development npm ci
+
+      - name: Pre-Build Checks
+        run: npm run prebuild-checks
+
+      - name: Run Tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
