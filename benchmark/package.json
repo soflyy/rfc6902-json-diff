@@ -1,0 +1,13 @@
+{
+  "name": "benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "benchmark.ts",
+  "scripts": {
+    "benchmark": "ts-node benchmark.ts"
+  },
+  "dependencies": {
+    "jsondiffpatch": "^0.4.1",
+    "rfc6902": "^5.0.1"
+  }
+}

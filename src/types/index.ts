@@ -1,4 +1,4 @@
-export * from "./rfc6902";
+export * as RFC6902 from "./rfc6902";
 
 export type ComparableRecord = Record<string | number, unknown>;
 export type ComparableArray = Array<unknown>;

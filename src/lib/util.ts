@@ -1,9 +1,15 @@
-import { trim } from "lodash";
+export function normalizePathComponent(path: string): string {
+  if (path.charAt(0) === "/") {
+    path = path.substring(1);
+  }
 
-export function escapePathComponent(path: string): string {
-  return trim(path, "/");
-  // if (path.indexOf("/") === -1 && path.indexOf("~") === -1) return path;
-  // return path.replace(/~/g, "~0").replace(/\//g, "~1");
+  if (path.endsWith("/")) {
+    path = path.substring(0, path.length - 1);
+  }
+
+  return path;
 }
-export const joinPathWith = (path: string, key: number | string) =>
-  `${path}/${escapePathComponent(String(key))}`;
+
+export function appendToPath(path: string, key: number | string) {
+  return `${path}/${normalizePathComponent(String(key))}`;
+}
