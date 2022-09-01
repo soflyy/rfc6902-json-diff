@@ -1,7 +1,9 @@
 {
   /* Visit https://aka.ms/tsconfig to read more about this file */
   "extends": "@tsconfig/node16-strictest/tsconfig.json",
+  "include": ["src/**/*"],
   "compilerOptions": {
+    "rootDir": "src",
     "outDir": "dist",
     "noUncheckedIndexedAccess": false,
     "resolveJsonModule": true
