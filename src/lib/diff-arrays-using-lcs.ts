@@ -1,8 +1,7 @@
 import type { ComparableArray, RFC6902 } from "../types";
-import { appendToPath } from "./util";
 import { diffUnknownValues } from "./diff-unknown-values";
 import bestSubSequence from "fast-array-diff/dist/diff/lcs";
-import equal from "fast-deep-equal";
+import { $mol_compare_deep } from "mol_compare_deep";
 
 type PatchItem<T> = {
   type: "add" | "remove";
@@ -14,19 +13,25 @@ type PatchItem<T> = {
 export function diffArraysUsingLcs(
   leftArr: ComparableArray,
   rightArr: ComparableArray,
-  path: string = ""
+  path: string = "",
+  operations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
-  return getLcsBasedOperations(leftArr, rightArr, equal, path);
+  return getLcsBasedOperations(
+    leftArr,
+    rightArr,
+    $mol_compare_deep,
+    path,
+    operations
+  );
 }
 
 export function getLcsBasedOperations<T>(
   a: T[],
   b: T[],
   compareFunc: (ia: T, ib: T) => boolean = (ia: T, ib: T) => ia === ib,
-  path: string
+  path: string,
+  outputOperations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
-  const outputOperations: RFC6902.Operation[] = [];
-
   let lastAdd: PatchItem<T> | null = null;
   let lastRemove: PatchItem<T> | null = null;
   let replaceAndDeepReplaceOperations: RFC6902.Operation[] = [];
@@ -48,7 +53,7 @@ export function getLcsBasedOperations<T>(
         for (let i = 0; i < lastRemove.items.length; i++) {
           outputOperations.push({
             op: "remove",
-            path: appendToPath(path, lastRemove.oldPos),
+            path: `${path}/${lastRemove.oldPos}`,
           });
         }
       }
@@ -57,7 +62,7 @@ export function getLcsBasedOperations<T>(
           outputOperations.push({
             op: "add",
             value: lastAdd.items[i],
-            path: appendToPath(path, lastAdd.oldPos + i),
+            path: `${path}/${lastAdd.oldPos + i}`,
           });
         }
       }
@@ -88,14 +93,10 @@ export function getLcsBasedOperations<T>(
             const oldValue = oldArr[i];
             const newValue = item;
 
-            const deepReplacesPathPrefix = appendToPath(
-              path,
-              String(oldStart + rIdx)
-            );
             const deepReplaces = diffUnknownValues(
               oldValue,
               newValue,
-              deepReplacesPathPrefix
+              `${path}/${oldStart + rIdx}`
             );
 
             replaceAndDeepReplaceOperations.push(...deepReplaces);
@@ -133,14 +134,10 @@ export function getLcsBasedOperations<T>(
             const oldValue = item;
             const newValue = newArr[i];
 
-            const deepReplacesPathPrefix = appendToPath(
-              path,
-              String(startIdx + rIdx)
-            );
             const deepReplaces = diffUnknownValues(
               oldValue,
               newValue,
-              deepReplacesPathPrefix
+              `${path}/${startIdx + rIdx}`
             );
 
             replaceAndDeepReplaceOperations.push(...deepReplaces);

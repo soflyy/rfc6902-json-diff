@@ -49,18 +49,26 @@ declare type ComparableRecord = Record<string | number, unknown>;
 declare type ComparableArray = Array<unknown>;
 declare type ComparableValue = ComparableRecord | ComparableArray;
 
-declare function normalizePathComponent(path: string): string;
-declare function appendToPath(path: string, key: number | string): string;
-
 declare function compare(left: ComparableValue, right: ComparableValue): Operation[];
 
-declare function diffUnknownValues(leftVal: unknown, rightVal: unknown, path?: string, rightValExists?: boolean): Operation[];
+declare function diffUnknownValues(leftVal: unknown, rightVal: unknown, path?: string, rightValExists?: boolean, operations?: Operation[]): Operation[];
 
-declare function diffObjects(leftObj: ComparableRecord, rightObj: ComparableRecord, path?: string): Operation[];
+/**
+ * ┌─────────────────────┬─────────────────┬─────────────────┬──────────────┬────────────────┐
+ * │       (index)       │       hz        │ margin of error │ runs sampled │ numTimesFaster │
+ * ├─────────────────────┼─────────────────┼─────────────────┼──────────────┼────────────────┤
+ * │         in          │ '1,013,226,071' │    '±0.20%'     │      99      │      4.95      │
+ * │ keys array indexOf  │ '1,009,080,312' │    '±0.20%'     │      99      │      4.93      │
+ * │ keys array includes │ '1,007,747,506' │    '±0.20%'     │      98      │      4.92      │
+ * │     reflect has     │  '216,295,810'  │    '±0.22%'     │      99      │      1.06      │
+ * │   hasOwnProperty    │  '204,669,307'  │    '±0.27%'     │      97      │       1        │
+ * └─────────────────────┴─────────────────┴─────────────────┴──────────────┴────────────────┘
+ */
+declare function diffObjects(leftObj: ComparableRecord, rightObj: ComparableRecord, path?: string, operations?: Operation[]): Operation[];
 
-declare function diffArrays(leftArr: Array<unknown>, rightArr: Array<unknown>, path?: string): Operation[];
+declare function diffArrays(leftArr: Array<unknown>, rightArr: Array<unknown>, path?: string, operations?: Operation[]): Operation[];
 
-declare function diffArraysUsingLcs(leftArr: ComparableArray, rightArr: ComparableArray, path?: string): Operation[];
-declare function getLcsBasedOperations<T>(a: T[], b: T[], compareFunc: ((ia: T, ib: T) => boolean) | undefined, path: string): Operation[];
+declare function diffArraysUsingLcs(leftArr: ComparableArray, rightArr: ComparableArray, path?: string, operations?: Operation[]): Operation[];
+declare function getLcsBasedOperations<T>(a: T[], b: T[], compareFunc: ((ia: T, ib: T) => boolean) | undefined, path: string, outputOperations?: Operation[]): Operation[];
 
-export { ComparableArray, ComparableRecord, ComparableValue, rfc6902 as RFC6902, appendToPath, compare, diffArrays, diffArraysUsingLcs, diffObjects, diffUnknownValues, getLcsBasedOperations, normalizePathComponent };
+export { ComparableArray, ComparableRecord, ComparableValue, rfc6902 as RFC6902, compare, diffArrays, diffArraysUsingLcs, diffObjects, diffUnknownValues, getLcsBasedOperations };

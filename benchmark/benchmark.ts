@@ -1,53 +1,93 @@
+// @ts-nocheck
+
 import { compare } from "../dist";
-import { performance, PerformanceObserver } from "perf_hooks";
-import { compare as fastJsonPatchCompare } from "fast-json-patch";
-import { snapshots } from "./builder-data";
+import {
+  multiDimensionalArrayCases,
+  objectCases,
+  otherCasesInsideMultidimensionalArrays,
+  realWorldLargeDocumentCases,
+  singleDimensionalArrayOfPrimitivesCases,
+} from "../src/tests/_diff-test-data";
+
+import type { DiffTestCase } from "../src/tests/_diff-test-data";
+
+import pkg from "fast-json-patch";
+const { compare: fastJsonPatchCompare } = pkg;
 import { createPatch } from "rfc6902";
 import { create, formatters } from "jsondiffpatch";
 
-const observer = new PerformanceObserver((list) =>
-  list.getEntries().forEach((entry) => console.info(entry))
-);
-observer.observe({ buffered: true, entryTypes: ["measure"] });
+// @ts-ignore
+import Benchmark from "benchmark";
+import * as process from "process";
+
+const PRECISION = 2;
 
 let i = 0;
-for (const [left, right] of snapshots) {
-  const leftParsed = JSON.parse(left);
-  const rightParsed = JSON.parse(right);
-  performance.mark(`start ${i}`);
-  compare(leftParsed, rightParsed);
-  performance.mark(`end ${i}`);
 
-  performance.mark(`fast-json-patch start ${i}`);
-  fastJsonPatchCompare(leftParsed, rightParsed);
-  performance.mark(`fast-json-patch end ${i}`);
+const jsondiffpatchDiffer = create({
+  arrays: { detectMove: false },
+  objectHash: (obj) => JSON.stringify(obj),
+});
 
-  performance.mark(`rfc6902 start ${i}`);
-  createPatch(leftParsed, rightParsed);
-  performance.mark(`rfc6902 end ${i}`);
+const testSuites: DiffTestCase[] = [
+  // ...realWorldLargeDocumentCases,
+  // ...otherCasesInsideMultidimensionalArrays,
+  ...singleDimensionalArrayOfPrimitivesCases,
+];
 
-  performance.mark(`jsondiffpatch start ${i}`);
-  // @ts-ignore
-  formatters.jsonpatch.format(
-    create({
-      arrays: { detectMove: false },
-      objectHash: (obj: any) => JSON.stringify(obj),
-    }).diff(leftParsed, rightParsed)
-  );
-  performance.mark(`jsondiffpatch end ${i}`);
+for (const testSuite of testSuites) {
+  const results: unknown[] = [];
+  const suite = new Benchmark.Suite();
+  suite
+    // add tests
+    .add("rfc6902-json-diff", () => {
+      compare(testSuite.left, testSuite.right);
+    })
+    .add("fast-json-patch", () => {
+      fastJsonPatchCompare(testSuite.left, testSuite.right);
+    })
+    .add("rfc6902", () => {
+      createPatch(testSuite.left, testSuite.right);
+    })
+    .add("jsondiffpatch", () => {
+      // @ts-ignore
+      formatters.jsonpatch.format(
+        jsondiffpatchDiffer.diff(testSuite.left, testSuite.right)
+      );
+    })
 
-  performance.measure(`rfc6902-json-diff ${i}`, `start ${i}`, `end ${i}`);
-  performance.measure(
-    `fast-json-patch ${i}`,
-    `fast-json-patch start ${i}`,
-    `fast-json-patch end ${i}`
-  );
-  performance.measure(`rfc6902 ${i}`, `rfc6902 start ${i}`, `rfc6902 end ${i}`);
-  performance.measure(
-    `jsondiffpatch ${i}`,
-    `jsondiffpatch start ${i}`,
-    `jsondiffpatch end ${i}`
-  );
+    // add listeners
+    .on("start", () =>
+      console.log(`Starting benchmarks set #${i} – ${testSuite.title}`)
+    )
+    .on("cycle", (event) =>
+      results.push({
+        name: event.target.name,
+        hz: event.target.hz,
+        "margin of error": `±${Number(event.target.stats.rme).toFixed(2)}%`,
+        "runs sampled": event.target.stats.sample.length,
+      })
+    )
+    .on("complete", function () {
+      const lowestHz = results.slice().sort((a, b) => a.hz - b.hz)[0].hz;
+
+      console.table(
+        results
+          .sort((a, b) => b.hz - a.hz)
+          .map((result) => ({
+            ...result,
+            hz: Math.round(result.hz).toLocaleString(),
+            numTimesFaster:
+              Math.round((10 ** PRECISION * result.hz) / lowestHz) /
+              10 ** PRECISION,
+          }))
+          .sort((a, b) => a.INPUT_SIZE - b.INPUT_SIZE)
+          .reduce((acc, { name, ...cur }) => ({ ...acc, [name]: cur }), {})
+      );
+      console.log("Fastest is " + this.filter("fastest").map("name"));
+    })
+
+    .run({ async: false });
 
   i++;
 }

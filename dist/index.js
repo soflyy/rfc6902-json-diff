@@ -2,22 +2,19 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var L = require('fast-array-diff/dist/diff/lcs');
-var V = require('fast-deep-equal');
+var I = require('fast-array-diff/dist/diff/lcs');
+var mol_compare_deep = require('mol_compare_deep');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
-var L__default = /*#__PURE__*/_interopDefaultLegacy(L);
-var V__default = /*#__PURE__*/_interopDefaultLegacy(V);
+var I__default = /*#__PURE__*/_interopDefaultLegacy(I);
 
-var B={};function U(e){return e.charAt(0)==="/"&&(e=e.substring(1)),e.endsWith("/")&&(e=e.substring(0,e.length-1)),e}function u(e,o){return `${e}/${U(String(o))}`}function F(e,o,p=""){let a=[],i=Object.keys(e),n=Object.keys(o);for(let r=i.length-1;r>=0;r--){let t=i[r],f=e[t],c=o[t];a.push(...m(f,c,u(p,t),Object.prototype.hasOwnProperty.call(o,t)));}for(let r=0;r<n.length;r++){let t=n[r];!Object.prototype.hasOwnProperty.call(e,t)&&o[t]!==void 0&&a.push({op:"add",path:u(p,t),value:o[t]});}return a}function A(e,o,p=""){return K(e,o,V__default["default"],p)}function K(e,o,p=(i,n)=>i===n,a){let i=[],n=null,r=null,t=[],f=0,c=0;function w(C,R,d,g,b,O,h){if(C==="same"){if(r!==null)for(let l=0;l<r.items.length;l++)i.push({op:"remove",path:u(a,r.oldPos)});if(n!==null)for(let l=0;l<n.items.length;l++)i.push({op:"add",value:n.items[l],path:u(a,n.oldPos+l)});t!==null&&i.push(...t),r=null,n=null,t=[];}else if(C==="remove"){let l=d-c+f;if(r===null&&(r={type:"remove",oldPos:l,newPos:O,items:[]}),n!==null)for(let s=d,y=0;s<g;++s,y++){let x=n.items.shift();if(x){f--;let T=R[s],P=x,v=u(a,String(d+y)),k=m(T,P,v);t.push(...k),r.oldPos++;}else r.items.push(R[s]),c++;}else for(let s=d;s<g;++s)r.items.push(R[s]),c++;}else if(C==="add"){let l=d-c+f;if(n===null&&(n={type:"add",oldPos:l,newPos:O,items:[]}),r!==null)for(let s=O,y=0;s<h;++s,y++){let x=r.items.shift();if(x){c--;let T=x,P=b[s],v=u(a,String(l+y)),k=m(T,P,v);t.push(...k),n.oldPos++;}else n.items.push(b[s]),f++;}else for(let s=O;s<h;++s)n.items.push(b[s]),f++;}}return L__default["default"](e,o,p,w),w("same",[],0,0,[],0,0),i}function I(e,o,p=""){let a=e.length,i=o.length;return a===0&&i===0?[]:a===0?[{op:"add",path:p,value:o}]:i===0?[{op:"replace",path:p,value:e}]:a===1&&i===1?m(e[0],o[0],u(p,0)):A(e,o,p)}function m(e,o,p="",a=!1){if(e===o)return [];if(!a&&e!==void 0&&o===void 0)return [{op:"remove",path:p}];let i=e===null?"null":typeof e,n=o===null?"null":typeof o,r=Array.isArray(e),t=Array.isArray(o);return i!==n||r!==t?[{op:"replace",path:p,value:o}]:r&&t?I(e,o,p):i==="object"?F(e,o,p):[{op:"replace",path:p,value:o}]}function ee(e,o){return m(e,o)}
+var A={};function h(t,e,a="",p=[]){let r=Object.getOwnPropertyNames(t),o=Object.getOwnPropertyNames(e);if(r.length===0&&o.length===0)return p;for(let n=r.length-1;n>=0;n--){let s=r[n];u(t[s],e[s],`${a}/${s}`,s in e,p);}for(let n=0;n<o.length;n++){let s=o[n];!(s in t)&&e[s]!==void 0&&p.push({op:"add",path:`${a}/${s}`,value:e[s]});}return p}function P(t,e,a="",p=[]){return B(t,e,mol_compare_deep.$mol_compare_deep,a,p)}function B(t,e,a=(o,n)=>o===n,p,r=[]){let o=null,n=null,s=[],m=0,f=0;function v(R,O,c,w,x,C,F){if(R==="same"){if(n!==null)for(let l=0;l<n.items.length;l++)r.push({op:"remove",path:`${p}/${n.oldPos}`});if(o!==null)for(let l=0;l<o.items.length;l++)r.push({op:"add",value:o.items[l],path:`${p}/${o.oldPos+l}`});s!==null&&r.push(...s),n=null,o=null,s=[];}else if(R==="remove"){let l=c-f+m;if(n===null&&(n={type:"remove",oldPos:l,newPos:C,items:[]}),o!==null)for(let i=c,d=0;i<w;++i,d++){let y=o.items.shift();if(y){m--;let b=O[i],T=u(b,y,`${p}/${c+d}`);s.push(...T),n.oldPos++;}else n.items.push(O[i]),f++;}else for(let i=c;i<w;++i)n.items.push(O[i]),f++;}else if(R==="add"){let l=c-f+m;if(o===null&&(o={type:"add",oldPos:l,newPos:C,items:[]}),n!==null)for(let i=C,d=0;i<F;++i,d++){let y=n.items.shift();if(y){f--;let b=y,k=x[i],T=u(b,k,`${p}/${l+d}`);s.push(...T),o.oldPos++;}else o.items.push(x[i]),m++;}else for(let i=C;i<F;++i)o.items.push(x[i]),m++;}}return I__default["default"](t,e,a,v),v("same",[],0,0,[],0,0),r}function $(t,e,a="",p=[]){let r=t.length,o=e.length;return r===0&&o===0?p:r===0?(p.push({op:"add",path:a,value:e}),p):o===0?(p.push({op:"replace",path:a,value:t}),p):r===1&&o===1?u(t[0],e[0],`${a}/0`,!0,p):P(t,e,a,p)}function u(t,e,a="",p=!1,r=[]){if(Object.is(t,e))return r;if(!p&&t!==void 0&&e===void 0)return r.push({op:"remove",path:a}),r;let o=t===null?"null":typeof t,n=e===null?"null":typeof e,s=o==="object"&&Array.isArray(t),m=n==="object"&&Array.isArray(e);return o!==n||s!==m?(r.push({op:"replace",path:a,value:e}),r):s&&m?($(t,e,a,r),r):o==="object"?(h(t,e,a,r),r):(r.push({op:"replace",path:a,value:e}),r)}function Q(t,e){return u(t,e)}
 
-exports.RFC6902 = B;
-exports.appendToPath = u;
-exports.compare = ee;
-exports.diffArrays = I;
-exports.diffArraysUsingLcs = A;
-exports.diffObjects = F;
-exports.diffUnknownValues = m;
-exports.getLcsBasedOperations = K;
-exports.normalizePathComponent = U;
+exports.RFC6902 = A;
+exports.compare = Q;
+exports.diffArrays = $;
+exports.diffArraysUsingLcs = P;
+exports.diffObjects = h;
+exports.diffUnknownValues = u;
+exports.getLcsBasedOperations = B;

@@ -2,6 +2,8 @@ import type { RFC6902, ComparableValue } from "../types";
 
 import jsonPatchTests from "./json-patch-tests.json";
 
+import { snapshots } from "./_builder-data";
+
 export type JsonPatchTestDef = {
   comment?: string;
   doc: ComparableValue;
@@ -350,6 +352,85 @@ export const objectCases: DiffTestCase[] = [
       { op: "replace", path: "/tree/leaf2", value: { foo: 1, bar: 2 } },
     ],
   },
+  {
+    title: "Deep Equality Test 1",
+    left: {
+      parent: {
+        children: [1, 2, 3],
+      },
+    },
+    right: {
+      parent: {
+        children: [1, 2, 3],
+      },
+    },
+    expected: [],
+  },
+  {
+    title: "Deep Equality Test 2",
+    left: {
+      parent: {
+        children: {
+          foo: "foo",
+          bar: "bar",
+          baz: "baz",
+        },
+      },
+    },
+    right: {
+      parent: {
+        children: {
+          foo: "foo",
+          bar: "bar",
+          baz: "baz",
+        },
+      },
+    },
+    expected: [],
+  },
+
+  {
+    title: "Deep Equality Test 3",
+    left: {
+      parent: {
+        children: {
+          foo: "foo",
+          bar: "bar",
+          baz: "baz",
+        },
+      },
+    },
+    right: {
+      parent: {
+        children: {
+          foo: "foo",
+          bar: "bar",
+          baz: "bax",
+        },
+      },
+    },
+    expected: [{ op: "replace", path: "/parent/children/baz", value: "bax" }],
+  },
+  {
+    title: "Empty Arrays Should Be Overridden",
+    left: {
+      parent: {
+        children: [],
+      },
+    },
+    right: {
+      parent: {
+        children: [1],
+      },
+    },
+    expected: [{ op: "add", path: "/parent/children", value: [1] }],
+  },
+  {
+    title: "Object overridden",
+    left: [1, 2, {}],
+    right: [1, 2, []],
+    expected: [{ op: "replace", path: "/2", value: [] }],
+  },
 ];
 
 export const multiDimensionalArrayCases: DiffTestCase[] = [
@@ -442,6 +523,15 @@ export const otherCasesInsideMultidimensionalArrays: DiffTestCase[] = [
   })),
 }));
 
+export const realWorldLargeDocumentCases: DiffTestCase[] = [
+  ...snapshots.map(([left, right, expected], i) => ({
+    title: `Snapshot ${i}`,
+    left: JSON.parse(left),
+    right: JSON.parse(right),
+    expected,
+  })),
+];
+
 export const allCases: DiffTestCase[] = [
   ...objectCases,
   ...singleDimensionalArrayOfPrimitivesCases,
@@ -450,4 +540,5 @@ export const allCases: DiffTestCase[] = [
   ...thirdPartyCases,
   ...multiDimensionalArrayCases,
   ...otherCasesInsideMultidimensionalArrays,
+  ...realWorldLargeDocumentCases,
 ];

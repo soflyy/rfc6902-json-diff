@@ -6,56 +6,55 @@ export function diffUnknownValues(
   leftVal: unknown,
   rightVal: unknown,
   path = "",
-  rightValExists = false
+  rightValExists = false,
+  operations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
-  // TODO path-based memoization
-
-  if (leftVal === rightVal) {
-    return [];
+  if (Object.is(leftVal, rightVal)) {
+    return operations;
   }
 
   if (!rightValExists && leftVal !== undefined && rightVal === undefined) {
-    return [
-      {
-        op: "remove",
-        path,
-      },
-    ];
+    operations.push({
+      op: "remove",
+      path,
+    });
+    return operations;
   }
 
   const leftValType = leftVal === null ? "null" : typeof leftVal;
   const rightValType = rightVal === null ? "null" : typeof rightVal;
 
-  const leftValIsArray = Array.isArray(leftVal);
-  const rightValIsArray = Array.isArray(rightVal);
+  const leftValIsArray = leftValType === "object" && Array.isArray(leftVal);
+  const rightValIsArray = rightValType === "object" && Array.isArray(rightVal);
 
   if (leftValType !== rightValType || leftValIsArray !== rightValIsArray) {
-    return [
-      {
-        op: "replace",
-        path,
-        value: rightVal,
-      },
-    ];
+    operations.push({
+      op: "replace",
+      path,
+      value: rightVal,
+    });
+    return operations;
   }
 
   // Now that both values have the exact same type
 
   if (leftValIsArray && rightValIsArray) {
-    return diffArrays(leftVal, rightVal, path);
+    diffArrays(leftVal, rightVal, path, operations);
+    return operations;
   } else if (leftValType === "object") {
-    return diffObjects(
+    diffObjects(
       leftVal as Record<number, unknown>,
       rightVal as Record<number, unknown>,
-      path
+      path,
+      operations
     );
+    return operations;
   } else {
-    return [
-      {
-        op: "replace",
-        path,
-        value: rightVal,
-      },
-    ];
+    operations.push({
+      op: "replace",
+      path,
+      value: rightVal,
+    });
+    return operations;
   }
 }
