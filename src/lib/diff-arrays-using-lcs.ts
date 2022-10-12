@@ -1,7 +1,7 @@
 import type { ComparableArray, RFC6902 } from "../types";
 import { diffUnknownValues } from "./diff-unknown-values";
 import bestSubSequence from "fast-array-diff/dist/diff/lcs";
-import { $mol_compare_deep } from "mol_compare_deep";
+import equal from "fast-deep-equal";
 
 type PatchItem<T> = {
   type: "add" | "remove";
@@ -16,13 +16,7 @@ export function diffArraysUsingLcs(
   path: string = "",
   operations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
-  return getLcsBasedOperations(
-    leftArr,
-    rightArr,
-    $mol_compare_deep,
-    path,
-    operations
-  );
+  return getLcsBasedOperations(leftArr, rightArr, equal, path, operations);
 }
 
 export function getLcsBasedOperations<T>(
