@@ -33,6 +33,10 @@ export function getLcsBasedOperations<T>(
   let addIdxShift = 0;
   let removeIdxShift = 0;
 
+  let lcsLength = -1;
+
+  const operations: RFC6902.Operation[] = [];
+
   function pushChange(
     type: "add" | "remove" | "same",
     oldArr: T[],
@@ -43,9 +47,10 @@ export function getLcsBasedOperations<T>(
     newEnd: number
   ) {
     if (type === "same") {
+      lcsLength++;
       if (lastRemove !== null) {
         for (let i = 0; i < lastRemove.items.length; i++) {
-          outputOperations.push({
+          operations.push({
             op: "remove",
             path: `${path}/${lastRemove.oldPos}`,
           });
@@ -53,7 +58,7 @@ export function getLcsBasedOperations<T>(
       }
       if (lastAdd !== null) {
         for (let i = 0; i < lastAdd.items.length; i++) {
-          outputOperations.push({
+          operations.push({
             op: "add",
             value: lastAdd.items[i],
             path: `${path}/${lastAdd.oldPos + i}`,
@@ -61,7 +66,7 @@ export function getLcsBasedOperations<T>(
         }
       }
       if (replaceAndDeepReplaceOperations !== null) {
-        outputOperations.push(...replaceAndDeepReplaceOperations);
+        operations.push(...replaceAndDeepReplaceOperations);
       }
       lastRemove = null;
       lastAdd = null;
@@ -154,6 +159,12 @@ export function getLcsBasedOperations<T>(
   bestSubSequence(a, b, compareFunc, pushChange);
 
   pushChange("same", [], 0, 0, [], 0, 0);
+
+  if (lcsLength > 0) {
+    outputOperations.push(...operations);
+  } else {
+    outputOperations.push({ op: "replace", path, value: b });
+  }
 
   return outputOperations;
 }
