@@ -19,8 +19,8 @@ export function diffObjects(
   path = "",
   operations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
-  const leftKeys = Object.getOwnPropertyNames(leftObj);
-  const rightKeys = Object.getOwnPropertyNames(rightObj);
+  const leftKeys = Object.keys(leftObj);
+  const rightKeys = Object.keys(rightObj);
 
   if (leftKeys.length === 0 && rightKeys.length === 0) {
     return operations;
