@@ -11739,6 +11739,38 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
       },
     ],
   },
+
+  {
+    title: "Real-world data issue #2",
+    left: [
+      {
+        id: 101,
+        data: {
+          type: "EssentialElements\\Heading",
+          properties: {
+            content: { content: { text: "This is a heading." } },
+            design: {
+              spacing: {
+                margin_top: {
+                  breakpoint_base: { number: 20, unit: "px", style: "20px" },
+                },
+              },
+            },
+          },
+        },
+        children: [],
+        _parentId: 110,
+      },
+    ],
+    right: [],
+    expected: [
+      {
+        op: "replace",
+        path: "",
+        value: [],
+      },
+    ],
+  },
 ];
 
 export const allCases: DiffTestCase[] = [

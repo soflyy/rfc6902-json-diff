@@ -21,7 +21,7 @@ export function diffArrays(
   }
 
   if (rightLen === 0) {
-    operations.push({ op: "replace", path, value: leftArr });
+    operations.push({ op: "replace", path, value: rightArr });
     return operations;
   }
 
