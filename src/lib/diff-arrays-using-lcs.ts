@@ -14,9 +14,17 @@ export function diffArraysUsingLcs(
   leftArr: ComparableArray,
   rightArr: ComparableArray,
   path: string = "",
-  operations: RFC6902.Operation[] = []
+  operations: RFC6902.Operation[] = [],
+  detectMoveOperations = false
 ): RFC6902.Operation[] {
-  return getLcsBasedOperations(leftArr, rightArr, equal, path, operations);
+  return getLcsBasedOperations(
+    leftArr,
+    rightArr,
+    equal,
+    path,
+    operations,
+    detectMoveOperations
+  );
 }
 
 export function getLcsBasedOperations<T>(
@@ -24,8 +32,10 @@ export function getLcsBasedOperations<T>(
   b: T[],
   compareFunc: (ia: T, ib: T) => boolean = (ia: T, ib: T) => ia === ib,
   path: string,
-  outputOperations: RFC6902.Operation[] = []
+  outputOperations: RFC6902.Operation[] = [],
+  detectMoveOperations = false
 ): RFC6902.Operation[] {
+  detectMoveOperations;
   let lastAdd: PatchItem<T> | null = null;
   let lastRemove: PatchItem<T> | null = null;
   let replaceAndDeepReplaceOperations: RFC6902.Operation[] = [];
@@ -46,6 +56,8 @@ export function getLcsBasedOperations<T>(
     newStart: number,
     newEnd: number
   ) {
+    const startIdx = oldStart - removeIdxShift + addIdxShift;
+
     if (type === "same") {
       lcsLength++;
       if (lastRemove !== null) {
@@ -55,6 +67,7 @@ export function getLcsBasedOperations<T>(
             path: `${path}/${lastRemove.oldPos}`,
           });
         }
+        lastRemove = null;
       }
       if (lastAdd !== null) {
         for (let i = 0; i < lastAdd.items.length; i++) {
@@ -64,16 +77,13 @@ export function getLcsBasedOperations<T>(
             path: `${path}/${lastAdd.oldPos + i}`,
           });
         }
+        lastAdd = null;
       }
-      if (replaceAndDeepReplaceOperations !== null) {
+      if (replaceAndDeepReplaceOperations.length > 0) {
         operations.push(...replaceAndDeepReplaceOperations);
+        replaceAndDeepReplaceOperations = [];
       }
-      lastRemove = null;
-      lastAdd = null;
-      replaceAndDeepReplaceOperations = [];
     } else if (type === "remove") {
-      const startIdx = oldStart - removeIdxShift + addIdxShift;
-
       if (lastRemove === null) {
         lastRemove = {
           type: "remove",
@@ -84,12 +94,21 @@ export function getLcsBasedOperations<T>(
       }
 
       if (lastAdd !== null) {
-        for (let i = oldStart, rIdx = 0; i < oldEnd; ++i, rIdx++) {
+        lastAdd.oldPos += oldEnd - oldStart;
+        if (lastRemove.oldPos === oldStart) {
+          lastRemove.newPos -= oldEnd - oldStart;
+        }
+
+        for (
+          let oldStartI = oldStart, rIdx = 0;
+          oldStartI < oldEnd;
+          ++oldStartI, rIdx++
+        ) {
           const item = lastAdd.items.shift();
           if (item) {
             addIdxShift--;
 
-            const oldValue = oldArr[i];
+            const oldValue = oldArr[oldStartI];
             const newValue = item;
 
             const deepReplaces = diffUnknownValues(
@@ -99,10 +118,8 @@ export function getLcsBasedOperations<T>(
             );
 
             replaceAndDeepReplaceOperations.push(...deepReplaces);
-
-            lastRemove.oldPos++;
           } else {
-            lastRemove.items.push(oldArr[i]);
+            lastRemove.items.push(oldArr[oldStartI]);
             removeIdxShift++;
           }
         }
@@ -113,8 +130,6 @@ export function getLcsBasedOperations<T>(
         }
       }
     } else if (type === "add") {
-      const startIdx = oldStart - removeIdxShift + addIdxShift;
-
       if (lastAdd === null) {
         lastAdd = {
           type: "add",

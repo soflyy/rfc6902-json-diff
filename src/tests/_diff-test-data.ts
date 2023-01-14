@@ -12,6 +12,7 @@ export type JsonPatchTestDef = {
 
 export type DiffTestCase = ({ skip?: boolean } | { only?: boolean }) & {
   title: string;
+  detectMoveOperations?: boolean;
   left: ComparableValue;
   right: ComparableValue;
   expected: RFC6902.Operation[];
@@ -11771,6 +11772,1189 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
       },
     ],
   },
+
+  {
+    title: "Real-world data issue #3",
+    left: [
+      {
+        id: 505,
+        data: {
+          type: "EssentialElements\\Div",
+          properties: null,
+        },
+        children: [
+          {
+            id: 515,
+            data: {
+              type: "EssentialElements\\Image",
+              properties: {
+                content: {
+                  content: {
+                    image: {
+                      id: 627,
+                      filename: "WBN1446_sleepless_wallet_a.jpg",
+                      url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg",
+                      alt: "",
+                      caption: "",
+                      mime: "image/jpeg",
+                      type: "image",
+                      sizes: {
+                        thumbnail: {
+                          height: 150,
+                          width: 150,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-150x150.jpg",
+                          orientation: "landscape",
+                        },
+                        medium: {
+                          height: 300,
+                          width: 300,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-300x300.jpg",
+                          orientation: "landscape",
+                        },
+                        medium_large: {
+                          height: 768,
+                          width: 768,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-768x768.jpg",
+                          orientation: "landscape",
+                        },
+                        full: {
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg",
+                          height: 1000,
+                          width: 1000,
+                          orientation: "landscape",
+                        },
+                      },
+                      attributes: {
+                        srcset:
+                          "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-150x150.jpg 150w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-300x300.jpg 300w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-768x768.jpg 768w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-600x600.jpg 600w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-100x100.jpg 100w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-128x128.jpg 128w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-256x256.jpg 256w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg 1000w",
+                        sizes: "(max-width: 150px) 100vw, 150px",
+                      },
+                    },
+                    size: "thumbnail",
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 505,
+          },
+        ],
+        _parentId: 504,
+      },
+      {
+        id: 506,
+        data: {
+          type: "EssentialElements\\MenuBuilder",
+          properties: null,
+        },
+        children: [
+          {
+            id: 507,
+            data: {
+              type: "EssentialElements\\MenuLink",
+              properties: {
+                content: {
+                  content: {
+                    link: {
+                      type: "url",
+                      url: "#",
+                    },
+                    text: "Home",
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 506,
+          },
+          {
+            id: 508,
+            data: {
+              type: "EssentialElements\\MenuDropdown",
+              properties: {
+                content: {
+                  content: {
+                    text: "Products",
+                    columns: [
+                      {
+                        title: "Airplanes",
+                        links: [
+                          {
+                            text: "Flyer Basic",
+                            description: "Go fast, don't crash.",
+                            url: "#",
+                          },
+                          {
+                            text: "Flyer Intermediate",
+                            description: "Go even faster and don't crash.",
+                            url: "#",
+                          },
+                          {
+                            text: "Flyer Matrix Edition",
+                            description: "Haul cargo long distances.",
+                          },
+                          {
+                            text: "ExpressRocket",
+                            description:
+                              "Launch cargo into space on the cheap.",
+                          },
+                          {
+                            text: "Boomslang Level 1",
+                            description: "Get certified for night operations.",
+                            url: "#",
+                          },
+                        ],
+                      },
+                      {
+                        title: "Helicopter",
+                        links: [
+                          {
+                            text: "Liftmeister 21",
+                            description:
+                              "The ultimate light utility helicopter.",
+                          },
+                          {
+                            text: "Heavymeister",
+                            description: "Lift large amounts of weight.",
+                          },
+                          {
+                            text: "Triblade Vortex",
+                            description: "Multi-engine reliability.",
+                          },
+                          {
+                            text: "Rugged & Heavy Industry",
+                            description:
+                              "Designed to take a beating and keep flying.",
+                          },
+                          {
+                            text: "Identity 6000",
+                            description:
+                              "The ultimate in business luxury travel.",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                design: {
+                  columns: {
+                    stack: null,
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 506,
+          },
+          {
+            id: 509,
+            data: {
+              type: "EssentialElements\\MenuDropdown",
+              properties: {
+                content: {
+                  content: {
+                    text: "Use Cases",
+                    columns: [
+                      {
+                        links: [
+                          {
+                            text: "Small Business",
+                            description: "Accept and display widgets.",
+                          },
+                          {
+                            text: "Medium Business",
+                            description: "Widgets for teams larger than 100.",
+                          },
+                          {
+                            text: "Enterprise",
+                            description:
+                              "Enterprise-grade reliability and security.",
+                          },
+                          {
+                            text: "Organizations",
+                            description: "Do even more with widgets.",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 506,
+          },
+          {
+            id: 510,
+            data: {
+              type: "EssentialElements\\MenuDropdown",
+              properties: {
+                content: {
+                  content: {
+                    text: "Developers",
+                    columns: [
+                      {
+                        title: "Documentation",
+                        links: [
+                          {
+                            text: "Getting Started Guide",
+                          },
+                          {
+                            text: "API Reference",
+                          },
+                          {
+                            text: "Sample Code",
+                          },
+                          {
+                            text: "Plugin Developer Handbook",
+                          },
+                        ],
+                      },
+                      {
+                        title: "Developer Community",
+                        links: [
+                          {
+                            text: "Forums",
+                          },
+                          {
+                            text: "Slack Channel",
+                          },
+                          {
+                            text: "Facebook Group",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 506,
+          },
+          {
+            id: 511,
+            data: {
+              type: "EssentialElements\\MenuCustomDropdown",
+              properties: {
+                content: {
+                  content: {
+                    text: "About",
+                  },
+                },
+              },
+            },
+            children: [
+              {
+                id: 512,
+                data: {
+                  type: "EssentialElements\\Heading",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "Custom Dropdown",
+                        tags: "h5",
+                      },
+                    },
+                    design: {
+                      spacing: {
+                        margin_bottom: {
+                          breakpoint_base: {
+                            number: 12,
+                            unit: "px",
+                            style: "12px",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 511,
+              },
+              {
+                id: 513,
+                data: {
+                  type: "EssentialElements\\Text",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "Design your dropdowns with Breakdance.",
+                      },
+                    },
+                    design: {
+                      spacing: {
+                        margin_bottom: {
+                          breakpoint_base: {
+                            number: 13,
+                            unit: "px",
+                            style: "13px",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 511,
+              },
+              {
+                id: 514,
+                data: {
+                  type: "EssentialElements\\Image",
+                  properties: {
+                    content: {
+                      content: {
+                        size: null,
+                        caption_type: "none",
+                        caption_position: "below-image",
+                        link_type: "none",
+                        loading: "lazy",
+                        image: {
+                          id: -1,
+                          type: "external_image",
+                          url: "https://images.unsplash.com/photo-1573164574472-797cdf4a583a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80",
+                          alt: "",
+                          caption: "",
+                        },
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 511,
+              },
+            ],
+            _parentId: 506,
+          },
+        ],
+        _parentId: 504,
+      },
+      {
+        id: 516,
+        data: {
+          type: "EssentialElements\\Div",
+          properties: {
+            design: {
+              container: {
+                width: {
+                  breakpoint_base: {
+                    number: 300,
+                    unit: "px",
+                    style: "300px",
+                  },
+                },
+              },
+            },
+          },
+        },
+        children: [
+          {
+            id: 517,
+            data: {
+              type: "EssentialElements\\Button",
+              properties: null,
+            },
+            children: [],
+            _parentId: 516,
+          },
+        ],
+        _parentId: 504,
+      },
+    ],
+    right: [
+      {
+        id: 505,
+        data: {
+          type: "EssentialElements\\Div",
+          properties: null,
+        },
+        children: [
+          {
+            id: 515,
+            data: {
+              type: "EssentialElements\\Image",
+              properties: {
+                content: {
+                  content: {
+                    image: {
+                      id: 627,
+                      filename: "WBN1446_sleepless_wallet_a.jpg",
+                      url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg",
+                      alt: "",
+                      caption: "",
+                      mime: "image/jpeg",
+                      type: "image",
+                      sizes: {
+                        thumbnail: {
+                          height: 150,
+                          width: 150,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-150x150.jpg",
+                          orientation: "landscape",
+                        },
+                        medium: {
+                          height: 300,
+                          width: 300,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-300x300.jpg",
+                          orientation: "landscape",
+                        },
+                        medium_large: {
+                          height: 768,
+                          width: 768,
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-768x768.jpg",
+                          orientation: "landscape",
+                        },
+                        full: {
+                          url: "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg",
+                          height: 1000,
+                          width: 1000,
+                          orientation: "landscape",
+                        },
+                      },
+                      attributes: {
+                        srcset:
+                          "http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-150x150.jpg 150w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-300x300.jpg 300w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-768x768.jpg 768w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-600x600.jpg 600w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-100x100.jpg 100w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-128x128.jpg 128w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a-256x256.jpg 256w, http://breakdance.local/wp-content/uploads/2022/10/WBN1446_sleepless_wallet_a.jpg 1000w",
+                        sizes: "(max-width: 150px) 100vw, 150px",
+                      },
+                    },
+                    size: "thumbnail",
+                  },
+                },
+              },
+            },
+            children: [],
+            _parentId: 505,
+          },
+          {
+            id: 506,
+            data: {
+              type: "EssentialElements\\MenuBuilder",
+              properties: null,
+            },
+            children: [
+              {
+                id: 507,
+                data: {
+                  type: "EssentialElements\\MenuLink",
+                  properties: {
+                    content: {
+                      content: {
+                        link: {
+                          type: "url",
+                          url: "#",
+                        },
+                        text: "Home",
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 506,
+              },
+              {
+                id: 508,
+                data: {
+                  type: "EssentialElements\\MenuDropdown",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "Products",
+                        columns: [
+                          {
+                            title: "Airplanes",
+                            links: [
+                              {
+                                text: "Flyer Basic",
+                                description: "Go fast, don't crash.",
+                                url: "#",
+                              },
+                              {
+                                text: "Flyer Intermediate",
+                                description: "Go even faster and don't crash.",
+                                url: "#",
+                              },
+                              {
+                                text: "Flyer Matrix Edition",
+                                description: "Haul cargo long distances.",
+                              },
+                              {
+                                text: "ExpressRocket",
+                                description:
+                                  "Launch cargo into space on the cheap.",
+                              },
+                              {
+                                text: "Boomslang Level 1",
+                                description:
+                                  "Get certified for night operations.",
+                                url: "#",
+                              },
+                            ],
+                          },
+                          {
+                            title: "Helicopter",
+                            links: [
+                              {
+                                text: "Liftmeister 21",
+                                description:
+                                  "The ultimate light utility helicopter.",
+                              },
+                              {
+                                text: "Heavymeister",
+                                description: "Lift large amounts of weight.",
+                              },
+                              {
+                                text: "Triblade Vortex",
+                                description: "Multi-engine reliability.",
+                              },
+                              {
+                                text: "Rugged & Heavy Industry",
+                                description:
+                                  "Designed to take a beating and keep flying.",
+                              },
+                              {
+                                text: "Identity 6000",
+                                description:
+                                  "The ultimate in business luxury travel.",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    design: {
+                      columns: {
+                        stack: null,
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 506,
+              },
+              {
+                id: 509,
+                data: {
+                  type: "EssentialElements\\MenuDropdown",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "Use Cases",
+                        columns: [
+                          {
+                            links: [
+                              {
+                                text: "Small Business",
+                                description: "Accept and display widgets.",
+                              },
+                              {
+                                text: "Medium Business",
+                                description:
+                                  "Widgets for teams larger than 100.",
+                              },
+                              {
+                                text: "Enterprise",
+                                description:
+                                  "Enterprise-grade reliability and security.",
+                              },
+                              {
+                                text: "Organizations",
+                                description: "Do even more with widgets.",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 506,
+              },
+              {
+                id: 510,
+                data: {
+                  type: "EssentialElements\\MenuDropdown",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "Developers",
+                        columns: [
+                          {
+                            title: "Documentation",
+                            links: [
+                              {
+                                text: "Getting Started Guide",
+                              },
+                              {
+                                text: "API Reference",
+                              },
+                              {
+                                text: "Sample Code",
+                              },
+                              {
+                                text: "Plugin Developer Handbook",
+                              },
+                            ],
+                          },
+                          {
+                            title: "Developer Community",
+                            links: [
+                              {
+                                text: "Forums",
+                              },
+                              {
+                                text: "Slack Channel",
+                              },
+                              {
+                                text: "Facebook Group",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+                children: [],
+                _parentId: 506,
+              },
+              {
+                id: 511,
+                data: {
+                  type: "EssentialElements\\MenuCustomDropdown",
+                  properties: {
+                    content: {
+                      content: {
+                        text: "About",
+                      },
+                    },
+                  },
+                },
+                children: [
+                  {
+                    id: 512,
+                    data: {
+                      type: "EssentialElements\\Heading",
+                      properties: {
+                        content: {
+                          content: {
+                            text: "Custom Dropdown",
+                            tags: "h5",
+                          },
+                        },
+                        design: {
+                          spacing: {
+                            margin_bottom: {
+                              breakpoint_base: {
+                                number: 12,
+                                unit: "px",
+                                style: "12px",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    children: [],
+                    _parentId: 511,
+                  },
+                  {
+                    id: 513,
+                    data: {
+                      type: "EssentialElements\\Text",
+                      properties: {
+                        content: {
+                          content: {
+                            text: "Design your dropdowns with Breakdance.",
+                          },
+                        },
+                        design: {
+                          spacing: {
+                            margin_bottom: {
+                              breakpoint_base: {
+                                number: 13,
+                                unit: "px",
+                                style: "13px",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    children: [],
+                    _parentId: 511,
+                  },
+                  {
+                    id: 514,
+                    data: {
+                      type: "EssentialElements\\Image",
+                      properties: {
+                        content: {
+                          content: {
+                            size: null,
+                            caption_type: "none",
+                            caption_position: "below-image",
+                            link_type: "none",
+                            loading: "lazy",
+                            image: {
+                              id: -1,
+                              type: "external_image",
+                              url: "https://images.unsplash.com/photo-1573164574472-797cdf4a583a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80",
+                              alt: "",
+                              caption: "",
+                            },
+                          },
+                        },
+                      },
+                    },
+                    children: [],
+                    _parentId: 511,
+                  },
+                ],
+                _parentId: 506,
+              },
+            ],
+            _parentId: 505,
+          },
+        ],
+        _parentId: 504,
+      },
+      {
+        id: 516,
+        data: {
+          type: "EssentialElements\\Div",
+          properties: {
+            design: {
+              container: {
+                width: {
+                  breakpoint_base: {
+                    number: 300,
+                    unit: "px",
+                    style: "300px",
+                  },
+                },
+              },
+            },
+          },
+        },
+        children: [
+          {
+            id: 517,
+            data: {
+              type: "EssentialElements\\Button",
+              properties: null,
+            },
+            children: [],
+            _parentId: 516,
+          },
+        ],
+        _parentId: 504,
+      },
+    ],
+    expected: [
+      {
+        op: "remove",
+        path: "/1",
+      },
+      {
+        op: "add",
+        path: "/0/children/1",
+        value: {
+          id: 506,
+          data: {
+            type: "EssentialElements\\MenuBuilder",
+            properties: null,
+          },
+          children: [
+            {
+              id: 507,
+              data: {
+                type: "EssentialElements\\MenuLink",
+                properties: {
+                  content: {
+                    content: {
+                      link: {
+                        type: "url",
+                        url: "#",
+                      },
+                      text: "Home",
+                    },
+                  },
+                },
+              },
+              children: [],
+              _parentId: 506,
+            },
+            {
+              id: 508,
+              data: {
+                type: "EssentialElements\\MenuDropdown",
+                properties: {
+                  content: {
+                    content: {
+                      text: "Products",
+                      columns: [
+                        {
+                          title: "Airplanes",
+                          links: [
+                            {
+                              text: "Flyer Basic",
+                              description: "Go fast, don't crash.",
+                              url: "#",
+                            },
+                            {
+                              text: "Flyer Intermediate",
+                              description: "Go even faster and don't crash.",
+                              url: "#",
+                            },
+                            {
+                              text: "Flyer Matrix Edition",
+                              description: "Haul cargo long distances.",
+                            },
+                            {
+                              text: "ExpressRocket",
+                              description:
+                                "Launch cargo into space on the cheap.",
+                            },
+                            {
+                              text: "Boomslang Level 1",
+                              description:
+                                "Get certified for night operations.",
+                              url: "#",
+                            },
+                          ],
+                        },
+                        {
+                          title: "Helicopter",
+                          links: [
+                            {
+                              text: "Liftmeister 21",
+                              description:
+                                "The ultimate light utility helicopter.",
+                            },
+                            {
+                              text: "Heavymeister",
+                              description: "Lift large amounts of weight.",
+                            },
+                            {
+                              text: "Triblade Vortex",
+                              description: "Multi-engine reliability.",
+                            },
+                            {
+                              text: "Rugged & Heavy Industry",
+                              description:
+                                "Designed to take a beating and keep flying.",
+                            },
+                            {
+                              text: "Identity 6000",
+                              description:
+                                "The ultimate in business luxury travel.",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                  design: {
+                    columns: {
+                      stack: null,
+                    },
+                  },
+                },
+              },
+              children: [],
+              _parentId: 506,
+            },
+            {
+              id: 509,
+              data: {
+                type: "EssentialElements\\MenuDropdown",
+                properties: {
+                  content: {
+                    content: {
+                      text: "Use Cases",
+                      columns: [
+                        {
+                          links: [
+                            {
+                              text: "Small Business",
+                              description: "Accept and display widgets.",
+                            },
+                            {
+                              text: "Medium Business",
+                              description: "Widgets for teams larger than 100.",
+                            },
+                            {
+                              text: "Enterprise",
+                              description:
+                                "Enterprise-grade reliability and security.",
+                            },
+                            {
+                              text: "Organizations",
+                              description: "Do even more with widgets.",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              children: [],
+              _parentId: 506,
+            },
+            {
+              id: 510,
+              data: {
+                type: "EssentialElements\\MenuDropdown",
+                properties: {
+                  content: {
+                    content: {
+                      text: "Developers",
+                      columns: [
+                        {
+                          title: "Documentation",
+                          links: [
+                            {
+                              text: "Getting Started Guide",
+                            },
+                            {
+                              text: "API Reference",
+                            },
+                            {
+                              text: "Sample Code",
+                            },
+                            {
+                              text: "Plugin Developer Handbook",
+                            },
+                          ],
+                        },
+                        {
+                          title: "Developer Community",
+                          links: [
+                            {
+                              text: "Forums",
+                            },
+                            {
+                              text: "Slack Channel",
+                            },
+                            {
+                              text: "Facebook Group",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              children: [],
+              _parentId: 506,
+            },
+            {
+              id: 511,
+              data: {
+                type: "EssentialElements\\MenuCustomDropdown",
+                properties: {
+                  content: {
+                    content: {
+                      text: "About",
+                    },
+                  },
+                },
+              },
+              children: [
+                {
+                  id: 512,
+                  data: {
+                    type: "EssentialElements\\Heading",
+                    properties: {
+                      content: {
+                        content: {
+                          text: "Custom Dropdown",
+                          tags: "h5",
+                        },
+                      },
+                      design: {
+                        spacing: {
+                          margin_bottom: {
+                            breakpoint_base: {
+                              number: 12,
+                              unit: "px",
+                              style: "12px",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  children: [],
+                  _parentId: 511,
+                },
+                {
+                  id: 513,
+                  data: {
+                    type: "EssentialElements\\Text",
+                    properties: {
+                      content: {
+                        content: {
+                          text: "Design your dropdowns with Breakdance.",
+                        },
+                      },
+                      design: {
+                        spacing: {
+                          margin_bottom: {
+                            breakpoint_base: {
+                              number: 13,
+                              unit: "px",
+                              style: "13px",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  children: [],
+                  _parentId: 511,
+                },
+                {
+                  id: 514,
+                  data: {
+                    type: "EssentialElements\\Image",
+                    properties: {
+                      content: {
+                        content: {
+                          size: null,
+                          caption_type: "none",
+                          caption_position: "below-image",
+                          link_type: "none",
+                          loading: "lazy",
+                          image: {
+                            id: -1,
+                            type: "external_image",
+                            url: "https://images.unsplash.com/photo-1573164574472-797cdf4a583a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80",
+                            alt: "",
+                            caption: "",
+                          },
+                        },
+                      },
+                    },
+                  },
+                  children: [],
+                  _parentId: 511,
+                },
+              ],
+              _parentId: 506,
+            },
+          ],
+          _parentId: 505,
+        },
+      },
+    ],
+  },
+];
+
+const detectMoveOperationCases: DiffTestCase[] = [
+  {
+    left: [
+      {
+        slug: "EssentialElements\\Heading",
+        properties: {
+          content: {
+            content: {
+              text: "McWay Falls",
+            },
+          },
+        },
+        children: [],
+      },
+      {
+        slug: "EssentialElements\\Text",
+        properties: {
+          content: {
+            content: {
+              text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
+            },
+          },
+          design: {
+            spacing: {
+              margin_bottom: null,
+              margin_top: null,
+            },
+          },
+        },
+        children: [],
+      },
+      {
+        slug: "EssentialElements\\Image",
+        properties: {
+          content: {
+            content: {
+              image: {
+                id: -1,
+                type: "external_image",
+                url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
+                alt: "",
+                caption: "",
+              },
+            },
+          },
+        },
+        children: [],
+      },
+    ],
+    right: [
+      {
+        slug: "EssentialElements\\Heading",
+        properties: {
+          content: {
+            content: {
+              text: "McWay Falls",
+            },
+          },
+        },
+        children: [],
+      },
+      {
+        slug: "EssentialElements\\Image",
+        properties: {
+          content: {
+            content: {
+              image: {
+                id: -1,
+                type: "external_image",
+                url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
+                alt: "",
+                caption: "",
+              },
+            },
+          },
+        },
+        children: [],
+      },
+      {
+        slug: "EssentialElements\\Text",
+        properties: {
+          content: {
+            content: {
+              text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
+            },
+          },
+          design: {
+            spacing: {
+              margin_bottom: null,
+              margin_top: null,
+            },
+          },
+        },
+        children: [],
+      },
+    ],
+    expected: [],
+    title: "Real-world move detection #1",
+    detectMoveOperations: true,
+    only: true,
+  },
 ];
 
 export const allCases: DiffTestCase[] = [
@@ -11782,4 +12966,5 @@ export const allCases: DiffTestCase[] = [
   ...multiDimensionalArrayCases,
   ...otherCasesInsideMultidimensionalArrays,
   ...realWorldLargeDocumentCases,
+  ...detectMoveOperationCases,
 ];

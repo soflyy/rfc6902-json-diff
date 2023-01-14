@@ -7,7 +7,8 @@ export function diffUnknownValues(
   rightVal: unknown,
   path = "",
   rightValExists = false,
-  operations: RFC6902.Operation[] = []
+  operations: RFC6902.Operation[] = [],
+  detectMoveOperations = false
 ): RFC6902.Operation[] {
   if (Object.is(leftVal, rightVal)) {
     return operations;
@@ -39,7 +40,7 @@ export function diffUnknownValues(
   // Now that both values have the exact same type
 
   if (leftValIsArray && rightValIsArray) {
-    diffArrays(leftVal, rightVal, path, operations);
+    diffArrays(leftVal, rightVal, path, operations, detectMoveOperations);
     return operations;
   } else if (leftValType === "object") {
     diffObjects(

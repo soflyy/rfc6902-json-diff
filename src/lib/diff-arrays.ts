@@ -6,7 +6,8 @@ export function diffArrays(
   leftArr: Array<unknown>,
   rightArr: Array<unknown>,
   path = "",
-  operations: RFC6902.Operation[] = []
+  operations: RFC6902.Operation[] = [],
+  detectMoveOperations = false
 ): RFC6902.Operation[] {
   const leftLen = leftArr.length;
   const rightLen = rightArr.length;
@@ -35,5 +36,11 @@ export function diffArrays(
     );
   }
 
-  return diffArraysUsingLcs(leftArr, rightArr, path, operations);
+  return diffArraysUsingLcs(
+    leftArr,
+    rightArr,
+    path,
+    operations,
+    detectMoveOperations
+  );
 }

@@ -30,9 +30,9 @@ const jsondiffpatchDiffer = create({
 });
 
 const testSuites: DiffTestCase[] = [
-  // ...realWorldLargeDocumentCases,
+  ...realWorldLargeDocumentCases,
   // ...otherCasesInsideMultidimensionalArrays,
-  ...singleDimensionalArrayOfPrimitivesCases,
+  // ...singleDimensionalArrayOfPrimitivesCases,
 ];
 
 for (const testSuite of testSuites) {
