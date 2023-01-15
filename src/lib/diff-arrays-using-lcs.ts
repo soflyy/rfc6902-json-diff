@@ -1,20 +1,40 @@
 import type { ComparableArray, RFC6902 } from "../types";
+// @ts-ignore
 import { diffUnknownValues } from "./diff-unknown-values";
 import bestSubSequence from "fast-array-diff/dist/diff/lcs";
 import equal from "fast-deep-equal";
 
+// @ts-ignore
+import * as util from "util";
+
+// @ts-ignore
+const log = (v: unknown) => {
+  // console.log(util.inspect(v, { depth: null }));
+};
+
 type RemoveOperationCandidate = {
   type: "remove";
   value: unknown;
-  idx: number;
-  shiftedIdx: number;
-  shiftedRemovalIdx: number;
+  sourceArrayRemovalBatch: {
+    startIdx: number;
+    length: number;
+    lengthShift: number;
+  };
+  sourceArrayRemovalBatchPosition: number;
+  sourceArrayIdx: number;
+  totalShiftedIdx: number;
 };
 type AddOperationCandidate = {
   type: "add";
   value: unknown;
-  idx: number;
-  shiftedIdx: number;
+  targetArrayIdx: number;
+  sourceArrayAdditionBatch: {
+    startIdx: number;
+    length: number;
+  };
+  sourceArrayAdditionBatchPosition: number;
+  sourceArrayIdx: number;
+  totalShiftedIdx: number;
 };
 
 type OperationCandidate =
@@ -23,6 +43,7 @@ type OperationCandidate =
   | {
       type: "replace";
       value: unknown;
+      removedValue: unknown;
       shiftedIdx: number;
     }
   | {
@@ -31,6 +52,19 @@ type OperationCandidate =
       fromShiftedIdx: number;
       toShiftedIdx: number;
     };
+
+type LCSChange = {
+  type: "add" | "remove" | "same";
+  oldStart: number;
+  oldEnd: number;
+  newStart: number;
+  newEnd: number;
+};
+
+type IndexShifts = {
+  additionsIdxShift: 0;
+  removalsIdxShift: 0;
+};
 
 export function diffArraysUsingLcs(
   leftArr: ComparableArray,
@@ -49,158 +83,106 @@ export function diffArraysUsingLcs(
   );
 }
 
-export function getLcsBasedOperations<T>(
+function mapLcsChangesToOperationCandidates<T>(
+  changes: LCSChange[],
   leftArr: T[],
   rightArr: T[],
-  compareFunc: (ia: unknown, ib: unknown) => boolean,
-  path: string,
-  outputOperations: RFC6902.Operation[] = [],
-  shouldDetectMoveOperations = false
-): RFC6902.Operation[] {
-  let lcsLength = -1;
-
-  const changes: Array<{
-    type: "add" | "remove" | "same";
-    oldStart: number;
-    oldEnd: number;
-    newStart: number;
-    newEnd: number;
-    // removeAfterAdd?: {
-    //   type: "add";
-    //   oldStart: number;
-    //   oldEnd: number;
-    //   newStart: number;
-    //   newEnd: number;
-    // };
-  }> = [];
-
-  let lastAdd: typeof changes = [];
-  // let lastRemove: typeof changes[number] = [];
-
-  function pushChange(
-    type: "add" | "remove" | "same",
-    _oldArr: T[],
-    oldStart: number,
-    oldEnd: number,
-    _newArr: T[],
-    newStart: number,
-    newEnd: number
-  ) {
-    const change: typeof changes[number] = {
-      type,
-      oldStart,
-      oldEnd,
-      newStart,
-      newEnd,
-    };
-
-    if (type === "same") {
-      lcsLength++;
-      lastAdd = [];
-    } else if (type === "add") {
-      lastAdd.push(change);
-    } else if (type === "remove") {
-      // lastRemove = change;
-
-      if (lastAdd.length > 0) {
-        // lastAdd.forEach((add) => (add.oldStart += oldEnd - oldStart));
-        // change.removeAfterAdd = lastAdd;
-        // change.oldStart = oldEnd - oldStart;
-      }
-    }
-
-    changes.push(change);
-  }
-
-  bestSubSequence(leftArr, rightArr, compareFunc, pushChange);
-
-  pushChange("same", [], 0, 0, [], 0, 0);
-
-  if (lcsLength <= 0) {
-    outputOperations.push({ op: "replace", path, value: rightArr });
-
-    return outputOperations;
-  }
-
+  indexShifts: IndexShifts
+) {
   const operationCandidates: OperationCandidate[] = [];
 
   for (const change of changes) {
-    const idx = change.oldStart;
-
     if (change.type === "remove") {
       const leftArrayItemsToRemove = leftArr.slice(
         change.oldStart,
         change.oldEnd
       );
 
-      leftArrayItemsToRemove.forEach((leftArrItemToRemove) => {
+      const sourceArrayRemovalBatch: RemoveOperationCandidate["sourceArrayRemovalBatch"] =
+        {
+          startIdx: change.oldStart,
+          length: leftArrayItemsToRemove.length,
+          lengthShift: 0,
+        };
+
+      for (const [i, leftArrItemToRemove] of leftArrayItemsToRemove.entries()) {
+        const sourceArrayIdx = change.oldStart + i;
+        const totalShiftedIdx =
+          sourceArrayIdx +
+          indexShifts.additionsIdxShift -
+          indexShifts.removalsIdxShift +
+          i;
+
         operationCandidates.push({
           type: "remove",
           value: leftArrItemToRemove,
-          idx: idx,
-          shiftedIdx: 0,
-          shiftedRemovalIdx: 0,
+          sourceArrayRemovalBatch,
+          sourceArrayRemovalBatchPosition: i,
+          sourceArrayIdx,
+          totalShiftedIdx,
         });
-      });
+        indexShifts.removalsIdxShift++;
+      }
     } else if (change.type === "add") {
       const rightArrayItemsToAdd = rightArr.slice(
         change.newStart,
         change.newEnd
       );
 
-      rightArrayItemsToAdd.forEach((rightArrItemToAdd) => {
+      const sourceArrayAdditionBatch: AddOperationCandidate["sourceArrayAdditionBatch"] =
+        {
+          startIdx: change.oldStart,
+          length: rightArrayItemsToAdd.length,
+        };
+
+      for (const [i, rightArrItemToAdd] of rightArrayItemsToAdd.entries()) {
+        const targetArrayIdx = change.newStart + i;
+
+        const sourceArrayIdx = change.oldStart + i;
+        const totalShiftedIdx =
+          sourceArrayIdx +
+          indexShifts.additionsIdxShift -
+          indexShifts.removalsIdxShift -
+          i;
+
         operationCandidates.push({
           type: "add",
           value: rightArrItemToAdd,
-          idx: idx,
-          shiftedIdx: 0,
+          targetArrayIdx,
+          sourceArrayAdditionBatch,
+          sourceArrayAdditionBatchPosition: i,
+          sourceArrayIdx,
+          totalShiftedIdx,
         });
-      });
+        indexShifts.additionsIdxShift++;
+      }
     }
   }
+  return operationCandidates;
+}
 
-  console.log({
-    leftArr,
-    rightArr,
-    changes,
-    operationCandidates: operationCandidates,
-  });
-
-  calculateShiftIndices(operationCandidates);
-
-  console.log({
-    leftArr,
-    rightArr,
-    operationCandidatesWIndicesShifted: operationCandidates,
-  });
-
-  detectReplaceOperations(operationCandidates);
-
-  console.log({
-    leftArr,
-    rightArr,
-    operationCandidatesWithReplaces: operationCandidates,
-  });
-
-  if (shouldDetectMoveOperations) {
-    detectMoveOperations(operationCandidates, compareFunc);
-    console.log({
-      leftArr,
-      rightArr,
-      operationCandidatesWithReplacesAndMoves: operationCandidates,
-    });
-  }
-
+function mapOperationCandidatesToOperations<T>(
+  operationCandidates: OperationCandidate[],
+  outputOperations: RFC6902.Operation[],
+  path: string,
+  leftArr: T[],
+  shouldDetectMoveOperations: boolean
+) {
   for (const candidate of operationCandidates) {
     if (candidate.type === "remove") {
+      const removalIdx =
+        candidate.totalShiftedIdx -
+        candidate.sourceArrayRemovalBatchPosition -
+        candidate.sourceArrayRemovalBatch.lengthShift;
+
       outputOperations.push({
         op: "remove",
-        path: `${path}/${candidate.shiftedRemovalIdx}`,
+        path: `${path}/${removalIdx}`,
       });
     } else if (candidate.type === "add") {
       outputOperations.push({
         op: "add",
-        path: `${path}/${candidate.shiftedIdx}`,
+        path: `${path}/${candidate.totalShiftedIdx}`,
         value: candidate.value,
       });
     } else if (candidate.type === "move") {
@@ -220,6 +202,110 @@ export function getLcsBasedOperations<T>(
       );
     }
   }
+}
+
+export function getLcsBasedOperations<T>(
+  leftArr: T[],
+  rightArr: T[],
+  compareFunc: (ia: unknown, ib: unknown) => boolean,
+  path: string,
+  outputOperations: RFC6902.Operation[] = [],
+  shouldDetectMoveOperations = false
+): RFC6902.Operation[] {
+  let lcsLength = -1;
+
+  const operationCandidates: OperationCandidate[] = [];
+
+  const batchAdditionChanges: LCSChange[] = [];
+  const batchRemovalChanges: LCSChange[] = [];
+
+  const indexShifts: IndexShifts = {
+    additionsIdxShift: 0,
+    removalsIdxShift: 0,
+  };
+
+  function pushChange(
+    type: "add" | "remove" | "same",
+    _oldArr: T[],
+    oldStart: number,
+    oldEnd: number,
+    _newArr: T[],
+    newStart: number,
+    newEnd: number
+  ) {
+    const change: LCSChange = Object.freeze({
+      type,
+      oldStart,
+      oldEnd,
+      newStart,
+      newEnd,
+    });
+
+    if (type === "same") {
+      // TODO lcsLength += oldEnd - oldStart
+      lcsLength++;
+
+      const batchOfChanges = [...batchRemovalChanges, ...batchAdditionChanges];
+
+      if (batchOfChanges.length === 0) {
+        return;
+      }
+
+      const batchOperationCandidates = mapLcsChangesToOperationCandidates(
+        batchOfChanges,
+        leftArr,
+        rightArr,
+        indexShifts
+      );
+
+      log({
+        leftArr,
+        rightArr,
+        batchOfChanges,
+        operationCandidates: batchOperationCandidates,
+      });
+
+      if (
+        batchRemovalChanges.length !== 0 &&
+        batchAdditionChanges.length !== 0
+      ) {
+        detectReplaceOperations(batchOperationCandidates);
+
+        log({
+          leftArr,
+          rightArr,
+          operationCandidatesWithReplaces: batchOperationCandidates,
+        });
+      }
+
+      operationCandidates.push(...batchOperationCandidates);
+
+      batchAdditionChanges.splice(0);
+      batchRemovalChanges.splice(0);
+    } else if (type === "add") {
+      batchAdditionChanges.push(change);
+    } else if (type === "remove") {
+      batchRemovalChanges.push(change);
+    }
+  }
+
+  bestSubSequence(leftArr, rightArr, compareFunc, pushChange);
+
+  pushChange("same", [], 0, 0, [], 0, 0);
+
+  if (lcsLength <= 0) {
+    outputOperations.push({ op: "replace", path, value: rightArr });
+
+    return outputOperations;
+  }
+
+  mapOperationCandidatesToOperations(
+    operationCandidates,
+    outputOperations,
+    path,
+    leftArr,
+    shouldDetectMoveOperations
+  );
 
   return outputOperations;
 }
@@ -246,16 +332,21 @@ function detectReplaceOperations(candidates: OperationCandidate[]) {
         candidates[i].type === "remove" ? candidates[i] : candidates[j]
       ) as RemoveOperationCandidate;
 
-      if (
-        addOperationCandidate.shiftedIdx !== removeOperationCandidate.shiftedIdx
-      ) {
+      const isValidReplaceMatch =
+        addOperationCandidate.targetArrayIdx ===
+        removeOperationCandidate.sourceArrayIdx;
+
+      if (!isValidReplaceMatch) {
         continue;
       }
+
+      removeOperationCandidate.sourceArrayRemovalBatch.lengthShift--;
 
       candidates[j] = {
         type: "replace",
         value: addOperationCandidate.value,
-        shiftedIdx: removeOperationCandidate.shiftedIdx,
+        removedValue: removeOperationCandidate.value,
+        shiftedIdx: removeOperationCandidate.sourceArrayIdx,
       };
 
       candidates.splice(i, 1);
@@ -264,128 +355,49 @@ function detectReplaceOperations(candidates: OperationCandidate[]) {
     }
   }
 }
-
-function detectMoveOperations(
-  candidates: OperationCandidate[],
-  compareFunc: (ia: unknown, ib: unknown) => boolean
-) {
-  for (let i = 0; i < candidates.length; i++) {
-    if (candidates[i].type !== "add" && candidates[i].type !== "remove") {
-      continue;
-    }
-
-    for (let j = candidates.length - 1; j > i; j--) {
-      if (candidates[j].type === candidates[i].type) {
-        continue;
-      }
-      if (candidates[j].type !== "add" && candidates[j].type !== "remove") {
-        continue;
-      }
-      if (!compareFunc(candidates[i].value, candidates[j].value)) {
-        continue;
-      }
-
-      const addOperationCandidate = (
-        candidates[i].type === "add" ? candidates[i] : candidates[j]
-      ) as AddOperationCandidate;
-
-      const removeOperationCandidate = (
-        candidates[i].type === "remove" ? candidates[i] : candidates[j]
-      ) as RemoveOperationCandidate;
-
-      const toIdxShift = 0;
-      const fromIdxShift =
-        removeOperationCandidate.idx > addOperationCandidate.idx ? -1 : 0;
-      // const toIdxShift =
-      //   addOperationCandidate.idx > removeOperationCandidate.idx ? +1 : 0;
-
-      candidates[i] = {
-        type: "move",
-        fromShiftedIdx: removeOperationCandidate.shiftedIdx + fromIdxShift,
-        toShiftedIdx: addOperationCandidate.shiftedIdx + toIdxShift,
-        value: addOperationCandidate.value,
-      };
-      candidates.splice(j, 1);
-    }
-  }
-}
-
-function calculateShiftIndices(operationCandidates: OperationCandidate[]) {
-  let totalAdditionsIdxShift = 0;
-  let totalRemovalsIdxShift = 0;
-
-  const idxShiftMap = [];
-
-  for (const candidate of operationCandidates) {
-    if (candidate.type !== "add" && candidate.type !== "remove") {
-      continue;
-    }
-    const originalCandidateIdx = candidate.idx;
-
-    if (idxShiftMap[originalCandidateIdx] === undefined) {
-      idxShiftMap[originalCandidateIdx] = {
-        additionsIdxShift: 0,
-        removalsIdxShift: 0,
-      };
-    }
-
-    const totalIdxShift = totalAdditionsIdxShift - totalRemovalsIdxShift;
-
-    const currentIdxShift =
-      idxShiftMap[originalCandidateIdx].additionsIdxShift -
-      idxShiftMap[originalCandidateIdx].removalsIdxShift;
-
-    const totalMinusCurrentIdxShift = totalIdxShift - currentIdxShift;
-
-    if (candidate.type === "add") {
-      console.log("add", {
-        candidate,
-        originalCandidateIdx,
-      });
-      // console.log(
-      //   "add",
-      //   candidate.idx,
-      //   candidate.value,
-      //   idxShiftMap[originalCandidateIdx].additionsIdxShift +
-      //     totalMinusCurrentIdxShift
-      // );
-      candidate.idx += idxShiftMap[originalCandidateIdx].additionsIdxShift;
-
-      candidate.shiftedIdx = candidate.idx + totalMinusCurrentIdxShift;
-
-      totalAdditionsIdxShift++;
-      idxShiftMap[originalCandidateIdx].additionsIdxShift++;
-    } else if (candidate.type === "remove") {
-      // console.log("remove", {
-      //   idx: candidate.idx,
-      //   val: candidate.value,
-      //   removalsIdxShift: idxShiftMap[originalCandidateIdx].removalsIdxShift,
-      //   totalIdxShift,
-      //   totalMinusCurrentIdxShift,
-      // });
-      candidate.idx += idxShiftMap[originalCandidateIdx].removalsIdxShift;
-
-      candidate.shiftedIdx = candidate.idx + totalMinusCurrentIdxShift;
-
-      // const currentRemovalsMinusAdditions =
-      //   idxShiftMap[originalCandidateIdx].additionsIdxShift > 0
-      //     ? idxShiftMap[originalCandidateIdx].removalsIdxShift -
-      //       idxShiftMap[originalCandidateIdx].additionsIdxShift +
-      //       1
-      //     : 0;
-
-      console.log("remove", {
-        candidate,
-        // currentRemovalsMinusAdditions,
-        originalCandidateIdx,
-      });
-
-      candidate.shiftedRemovalIdx =
-        originalCandidateIdx + totalIdxShift - currentIdxShift;
-      // + currentRemovalsMinusAdditions;
-
-      totalRemovalsIdxShift++;
-      idxShiftMap[originalCandidateIdx].removalsIdxShift++;
-    }
-  }
-}
+//
+// function detectMoveOperations(
+//   candidates: OperationCandidate[],
+//   compareFunc: (ia: unknown, ib: unknown) => boolean
+// ) {
+//   for (let i = 0; i < candidates.length; i++) {
+//     if (candidates[i].type !== "add" && candidates[i].type !== "remove") {
+//       continue;
+//     }
+//
+//     for (let j = candidates.length - 1; j > i; j--) {
+//       if (candidates[j].type === candidates[i].type) {
+//         continue;
+//       }
+//       if (candidates[j].type !== "add" && candidates[j].type !== "remove") {
+//         continue;
+//       }
+//       if (!compareFunc(candidates[i].value, candidates[j].value)) {
+//         continue;
+//       }
+//
+//       const addOperationCandidate = (
+//         candidates[i].type === "add" ? candidates[i] : candidates[j]
+//       ) as AddOperationCandidate;
+//
+//       const removeOperationCandidate = (
+//         candidates[i].type === "remove" ? candidates[i] : candidates[j]
+//       ) as RemoveOperationCandidate;
+//
+//       const toIdxShift = 0;
+//       const fromIdxShift =
+//         removeOperationCandidate.idx > addOperationCandidate.idx ? -1 : 0;
+//       // const toIdxShift =
+//       //   addOperationCandidate.idx > removeOperationCandidate.idx ? +1 : 0;
+//
+//       candidates[i] = {
+//         type: "move",
+//         fromShiftedIdx: removeOperationCandidate.shiftedIdx + fromIdxShift,
+//         toShiftedIdx: addOperationCandidate.shiftedIdx + toIdxShift,
+//         value: addOperationCandidate.value,
+//       };
+//       candidates.splice(j, 1);
+//     }
+//   }
+// }
+//

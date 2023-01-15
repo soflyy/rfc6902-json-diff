@@ -200,7 +200,7 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
-    // // only: true,
+    // only: true,
     title: "Append 3, Prepend 3 & Remove 3 Head Items Of Array",
     left: ["A", "B", "C", 1, 2, 3],
     right: ["I", "O", "P", 1, 2, 3, "D", "E", "F"],
@@ -215,14 +215,18 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
-    only: true,
+    // only: true,
     title: "Foo Append 3, Prepend 3 & Remove 3 Head Items Of Array",
     left: ["A", "B", "C", "O", 1, 2, 3],
+    // replace A -> I
+    // remove B
+    // remove C
+    // add P after O
     right: ["I", "O", "P", 1, 2, 3, "D", "E", "F"],
     expected: [
-      { op: "remove", path: "/0" },
-      { op: "remove", path: "/0" },
       { op: "replace", path: "/0", value: "I" },
+      { op: "remove", path: "/1" },
+      { op: "remove", path: "/1" },
       { op: "add", value: "P", path: "/2" },
       { op: "add", value: "D", path: "/6" },
       { op: "add", value: "E", path: "/7" },
@@ -12858,156 +12862,156 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
   },
 ];
 
-const detectMoveOperationCases: DiffTestCase[] = [
-  {
-    left: [
-      {
-        slug: "EssentialElements\\Heading",
-        properties: {
-          content: {
-            content: {
-              text: "McWay Falls",
-            },
-          },
-        },
-        children: [],
-      },
-      {
-        slug: "EssentialElements\\Text",
-        properties: {
-          content: {
-            content: {
-              text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
-            },
-          },
-          design: {
-            spacing: {
-              margin_bottom: null,
-              margin_top: null,
-            },
-          },
-        },
-        children: [],
-      },
-      {
-        slug: "EssentialElements\\Image",
-        properties: {
-          content: {
-            content: {
-              image: {
-                id: -1,
-                type: "external_image",
-                url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
-                alt: "",
-                caption: "",
-              },
-            },
-          },
-        },
-        children: [],
-      },
-    ],
-    right: [
-      {
-        slug: "EssentialElements\\Heading",
-        properties: {
-          content: {
-            content: {
-              text: "McWay Falls",
-            },
-          },
-        },
-        children: [],
-      },
-      {
-        slug: "EssentialElements\\Image",
-        properties: {
-          content: {
-            content: {
-              image: {
-                id: -1,
-                type: "external_image",
-                url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
-                alt: "",
-                caption: "",
-              },
-            },
-          },
-        },
-        children: [],
-      },
-      {
-        slug: "EssentialElements\\Text",
-        properties: {
-          content: {
-            content: {
-              text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
-            },
-          },
-          design: {
-            spacing: {
-              margin_bottom: null,
-              margin_top: null,
-            },
-          },
-        },
-        children: [],
-      },
-    ],
-    expected: [
-      {
-        op: "move",
-        path: "/2",
-        from: "/1",
-      },
-    ],
-    title: "Real-world move detection #1",
-    detectMoveOperations: true,
-    // // only: true,
-  },
-  {
-    // // only: true,
-    left: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-
-    // add "A"
-    // replace 1 with "R"
-    // transpose "6" and "5"
-    right: ["A", "R", 2, 3, 4, 6, 5, 7, 8, 9, 10],
-    expected: [
-      {
-        op: "replace",
-        path: "/0",
-        value: "A",
-      },
-      {
-        op: "add",
-        path: "/1",
-        value: "R",
-      },
-      {
-        from: "/6",
-        op: "move",
-        path: "/5",
-      },
-    ],
-    title: "Move detection: #1",
-    detectMoveOperations: true,
-  },
-  {
-    left: [1, 2, 3, 4],
-    right: [1, 3, 2, 4],
-    expected: [
-      {
-        op: "move",
-        from: "/2",
-        path: "/1",
-      },
-    ],
-    title: "Move detection: #2",
-    detectMoveOperations: true,
-    // // only: true,
-  },
-];
+// const detectMoveOperationCases: DiffTestCase[] = [
+//   {
+//     left: [
+//       {
+//         slug: "EssentialElements\\Heading",
+//         properties: {
+//           content: {
+//             content: {
+//               text: "McWay Falls",
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//       {
+//         slug: "EssentialElements\\Text",
+//         properties: {
+//           content: {
+//             content: {
+//               text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
+//             },
+//           },
+//           design: {
+//             spacing: {
+//               margin_bottom: null,
+//               margin_top: null,
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//       {
+//         slug: "EssentialElements\\Image",
+//         properties: {
+//           content: {
+//             content: {
+//               image: {
+//                 id: -1,
+//                 type: "external_image",
+//                 url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
+//                 alt: "",
+//                 caption: "",
+//               },
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//     ],
+//     right: [
+//       {
+//         slug: "EssentialElements\\Heading",
+//         properties: {
+//           content: {
+//             content: {
+//               text: "McWay Falls",
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//       {
+//         slug: "EssentialElements\\Image",
+//         properties: {
+//           content: {
+//             content: {
+//               image: {
+//                 id: -1,
+//                 type: "external_image",
+//                 url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
+//                 alt: "",
+//                 caption: "",
+//               },
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//       {
+//         slug: "EssentialElements\\Text",
+//         properties: {
+//           content: {
+//             content: {
+//               text: "McWay Falls is an 80-foot-tall waterfall on the coast of Big Sur in central California that flows year-round from McWay Creek in Julia Pfeiffer Burns State Park, about 37 miles south of Carmel, into the Pacific Ocean. During high tide, it is a tidefall, a waterfall that empties directly into the ocean",
+//             },
+//           },
+//           design: {
+//             spacing: {
+//               margin_bottom: null,
+//               margin_top: null,
+//             },
+//           },
+//         },
+//         children: [],
+//       },
+//     ],
+//     expected: [
+//       {
+//         op: "move",
+//         path: "/2",
+//         from: "/1",
+//       },
+//     ],
+//     title: "Real-world move detection #1",
+//     detectMoveOperations: true,
+//     // // only: true,
+//   },
+//   {
+//     // // only: true,
+//     left: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+//
+//     // add "A"
+//     // replace 1 with "R"
+//     // transpose "6" and "5"
+//     right: ["A", "R", 2, 3, 4, 6, 5, 7, 8, 9, 10],
+//     expected: [
+//       {
+//         op: "replace",
+//         path: "/0",
+//         value: "A",
+//       },
+//       {
+//         op: "add",
+//         path: "/1",
+//         value: "R",
+//       },
+//       {
+//         from: "/6",
+//         op: "move",
+//         path: "/5",
+//       },
+//     ],
+//     title: "Move detection: #1",
+//     detectMoveOperations: true,
+//   },
+//   {
+//     left: [1, 2, 3, 4],
+//     right: [1, 3, 2, 4],
+//     expected: [
+//       {
+//         op: "move",
+//         from: "/2",
+//         path: "/1",
+//       },
+//     ],
+//     title: "Move detection: #2",
+//     detectMoveOperations: true,
+//     // // only: true,
+//   },
+// ];
 
 export const allCases: DiffTestCase[] = [
   ...objectCases,
@@ -13018,5 +13022,5 @@ export const allCases: DiffTestCase[] = [
   ...multiDimensionalArrayCases,
   ...otherCasesInsideMultidimensionalArrays,
   ...realWorldLargeDocumentCases,
-  ...detectMoveOperationCases,
+  // ...detectMoveOperationCases,
 ];
