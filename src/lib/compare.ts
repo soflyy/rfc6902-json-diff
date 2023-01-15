@@ -22,7 +22,6 @@ function createCompareFunc(doCaching: boolean): CompareFunc {
       right !== null
     ) {
       if (equalityCache.has(left) && equalityCache.get(left)?.includes(right)) {
-        // console.log("cache hit", left, right);
         return true;
       }
 
@@ -30,8 +29,6 @@ function createCompareFunc(doCaching: boolean): CompareFunc {
         equalityCache.has(right) &&
         equalityCache.get(right)?.includes(left)
       ) {
-        // console.log("cache hit");
-
         return true;
       }
 
