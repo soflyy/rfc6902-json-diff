@@ -172,6 +172,7 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
     ],
   },
   {
+    // only: true,
     title: "Prepend 3 & Remove 3 Tail Items Of Array",
     left: [1, 2, 3, "D", "E", "F"],
     right: ["A", "B", "C", 1, 2, 3],
@@ -199,7 +200,7 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
-    // only: true,
+    // // only: true,
     title: "Append 3, Prepend 3 & Remove 3 Head Items Of Array",
     left: ["A", "B", "C", 1, 2, 3],
     right: ["I", "O", "P", 1, 2, 3, "D", "E", "F"],
@@ -214,6 +215,7 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
+    only: true,
     title: "Foo Append 3, Prepend 3 & Remove 3 Head Items Of Array",
     left: ["A", "B", "C", "O", 1, 2, 3],
     right: ["I", "O", "P", 1, 2, 3, "D", "E", "F"],
@@ -422,6 +424,7 @@ export const objectCases: DiffTestCase[] = [
     expected: [{ op: "add", path: "/parent/children", value: [1] }],
   },
   {
+    // // only: true,
     title: "Object overridden",
     left: [1, 2, {}],
     right: [1, 2, []],
@@ -11774,6 +11777,7 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
   },
 
   {
+    // only: true,
     title: "Real-world data issue #3",
     left: [
       {
@@ -12553,10 +12557,6 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
     ],
     expected: [
       {
-        op: "remove",
-        path: "/1",
-      },
-      {
         op: "add",
         path: "/0/children/1",
         value: {
@@ -12850,6 +12850,10 @@ export const realWorldLargeDocumentCases: DiffTestCase[] = [
           _parentId: 505,
         },
       },
+      {
+        op: "remove",
+        path: "/1",
+      },
     ],
   },
 ];
@@ -12950,10 +12954,58 @@ const detectMoveOperationCases: DiffTestCase[] = [
         children: [],
       },
     ],
-    expected: [],
+    expected: [
+      {
+        op: "move",
+        path: "/2",
+        from: "/1",
+      },
+    ],
     title: "Real-world move detection #1",
     detectMoveOperations: true,
-    only: true,
+    // // only: true,
+  },
+  {
+    // // only: true,
+    left: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+
+    // add "A"
+    // replace 1 with "R"
+    // transpose "6" and "5"
+    right: ["A", "R", 2, 3, 4, 6, 5, 7, 8, 9, 10],
+    expected: [
+      {
+        op: "replace",
+        path: "/0",
+        value: "A",
+      },
+      {
+        op: "add",
+        path: "/1",
+        value: "R",
+      },
+      {
+        from: "/6",
+        op: "move",
+        path: "/5",
+      },
+    ],
+    title: "Move detection: #1",
+    detectMoveOperations: true,
+  },
+  {
+    left: [1, 2, 3, 4],
+    right: [1, 3, 2, 4],
+    expected: [
+      {
+        op: "move",
+        from: "/2",
+        path: "/1",
+      },
+    ],
+    title: "Move detection: #2",
+    detectMoveOperations: true,
+    // // only: true,
   },
 ];
 
