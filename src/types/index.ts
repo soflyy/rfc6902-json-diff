@@ -5,4 +5,6 @@ export type ComparableArray = Array<unknown>;
 export type ComparableValue = ComparableRecord | ComparableArray;
 export type CompareOptions = {
   detectMoveOperations?: boolean;
+  doCaching?: boolean;
 };
+export type CompareFunc = (ia: unknown, ib: unknown) => boolean;

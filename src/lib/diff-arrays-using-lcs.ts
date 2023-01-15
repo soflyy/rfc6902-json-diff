@@ -1,8 +1,7 @@
-import type { ComparableArray, RFC6902 } from "../types";
+import type { ComparableArray, CompareFunc, RFC6902 } from "../types";
 // @ts-ignore
 import { diffUnknownValues } from "./diff-unknown-values";
 import bestSubSequence from "fast-array-diff/dist/diff/lcs";
-import equal from "fast-deep-equal";
 
 // @ts-ignore
 import * as util from "util";
@@ -69,6 +68,7 @@ type IndexShifts = {
 export function diffArraysUsingLcs(
   leftArr: ComparableArray,
   rightArr: ComparableArray,
+  compareFunc: CompareFunc,
   path: string = "",
   operations: RFC6902.Operation[] = [],
   detectMoveOperations = false
@@ -76,7 +76,7 @@ export function diffArraysUsingLcs(
   return getLcsBasedOperations(
     leftArr,
     rightArr,
-    equal,
+    compareFunc,
     path,
     operations,
     detectMoveOperations
@@ -165,6 +165,7 @@ function mapOperationCandidatesToOperations<T>(
   operationCandidates: OperationCandidate[],
   outputOperations: RFC6902.Operation[],
   path: string,
+  compareFunc: CompareFunc,
   leftArr: T[],
   shouldDetectMoveOperations: boolean
 ) {
@@ -195,6 +196,7 @@ function mapOperationCandidatesToOperations<T>(
       diffUnknownValues(
         leftArr[candidate.shiftedIdx],
         candidate.value,
+        compareFunc,
         `${path}/${candidate.shiftedIdx}`,
         true,
         outputOperations,
@@ -207,7 +209,7 @@ function mapOperationCandidatesToOperations<T>(
 export function getLcsBasedOperations<T>(
   leftArr: T[],
   rightArr: T[],
-  compareFunc: (ia: unknown, ib: unknown) => boolean,
+  compareFunc: CompareFunc,
   path: string,
   outputOperations: RFC6902.Operation[] = [],
   shouldDetectMoveOperations = false
@@ -303,6 +305,7 @@ export function getLcsBasedOperations<T>(
     operationCandidates,
     outputOperations,
     path,
+    compareFunc,
     leftArr,
     shouldDetectMoveOperations
   );
