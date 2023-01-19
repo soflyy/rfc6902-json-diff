@@ -26,7 +26,6 @@ const diffMacro = test.macro(
       leftActualClone,
       actualDiff
     );
-
     t.deepEqual(
       actualDiffDocument,
       rightActualClone,
