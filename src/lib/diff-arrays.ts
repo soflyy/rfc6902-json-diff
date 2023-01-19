@@ -1,12 +1,14 @@
 import { diffArraysUsingLcs } from "./diff-arrays-using-lcs";
 import { diffUnknownValues } from "./diff-unknown-values";
-import type { RFC6902 } from "../types";
+import type { RFC6902, CompareFunc } from "../types";
 
 export function diffArrays(
   leftArr: Array<unknown>,
   rightArr: Array<unknown>,
+  compareFunc: CompareFunc,
   path = "",
-  operations: RFC6902.Operation[] = []
+  operations: RFC6902.Operation[] = [],
+  detectMoveOperations = false
 ): RFC6902.Operation[] {
   const leftLen = leftArr.length;
   const rightLen = rightArr.length;
@@ -29,11 +31,19 @@ export function diffArrays(
     return diffUnknownValues(
       leftArr[0],
       rightArr[0],
+      compareFunc,
       `${path}/0`,
       true,
       operations
     );
   }
 
-  return diffArraysUsingLcs(leftArr, rightArr, path, operations);
+  return diffArraysUsingLcs(
+    leftArr,
+    rightArr,
+    compareFunc,
+    path,
+    operations,
+    detectMoveOperations
+  );
 }

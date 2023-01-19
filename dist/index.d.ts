@@ -48,10 +48,15 @@ declare namespace rfc6902 {
 declare type ComparableRecord = Record<string | number, unknown>;
 declare type ComparableArray = Array<unknown>;
 declare type ComparableValue = ComparableRecord | ComparableArray;
+declare type CompareOptions = {
+    detectMoveOperations?: boolean;
+    doCaching?: boolean;
+};
+declare type CompareFunc = (ia: unknown, ib: unknown) => boolean;
 
-declare function compare(left: ComparableValue, right: ComparableValue): Operation[];
+declare function compare(left: ComparableValue, right: ComparableValue, options?: CompareOptions): Operation[];
 
-declare function diffUnknownValues(leftVal: unknown, rightVal: unknown, path?: string, rightValExists?: boolean, operations?: Operation[]): Operation[];
+declare function diffUnknownValues(leftVal: unknown, rightVal: unknown, compareFunc: CompareFunc, path?: string, rightValExists?: boolean, operations?: Operation[], detectMoveOperations?: boolean): Operation[];
 
 /**
  * ┌─────────────────────┬─────────────────┬─────────────────┬──────────────┬────────────────┐
@@ -64,11 +69,11 @@ declare function diffUnknownValues(leftVal: unknown, rightVal: unknown, path?: s
  * │   hasOwnProperty    │  '204,669,307'  │    '±0.27%'     │      97      │       1        │
  * └─────────────────────┴─────────────────┴─────────────────┴──────────────┴────────────────┘
  */
-declare function diffObjects(leftObj: ComparableRecord, rightObj: ComparableRecord, path?: string, operations?: Operation[]): Operation[];
+declare function diffObjects(leftObj: ComparableRecord, rightObj: ComparableRecord, compareFunc: CompareFunc, path?: string, operations?: Operation[]): Operation[];
 
-declare function diffArrays(leftArr: Array<unknown>, rightArr: Array<unknown>, path?: string, operations?: Operation[]): Operation[];
+declare function diffArrays(leftArr: Array<unknown>, rightArr: Array<unknown>, compareFunc: CompareFunc, path?: string, operations?: Operation[], detectMoveOperations?: boolean): Operation[];
 
-declare function diffArraysUsingLcs(leftArr: ComparableArray, rightArr: ComparableArray, path?: string, operations?: Operation[]): Operation[];
-declare function getLcsBasedOperations<T>(a: T[], b: T[], compareFunc: ((ia: T, ib: T) => boolean) | undefined, path: string, outputOperations?: Operation[]): Operation[];
+declare function diffArraysUsingLcs(leftArr: ComparableArray, rightArr: ComparableArray, compareFunc: CompareFunc, path?: string, operations?: Operation[], detectMoveOperations?: boolean): Operation[];
+declare function getLcsBasedOperations<T>(leftArr: T[], rightArr: T[], compareFunc: CompareFunc, path: string, outputOperations?: Operation[], shouldDetectMoveOperations?: boolean): Operation[];
 
-export { ComparableArray, ComparableRecord, ComparableValue, rfc6902 as RFC6902, compare, diffArrays, diffArraysUsingLcs, diffObjects, diffUnknownValues, getLcsBasedOperations };
+export { ComparableArray, ComparableRecord, ComparableValue, CompareFunc, CompareOptions, rfc6902 as RFC6902, compare, diffArrays, diffArraysUsingLcs, diffObjects, diffUnknownValues, getLcsBasedOperations };

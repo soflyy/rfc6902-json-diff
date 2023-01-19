@@ -1,4 +1,4 @@
-import type { ComparableRecord, RFC6902 } from "../types";
+import type { ComparableRecord, RFC6902, CompareFunc } from "../types";
 import { diffUnknownValues } from "./diff-unknown-values";
 
 /**
@@ -16,6 +16,7 @@ import { diffUnknownValues } from "./diff-unknown-values";
 export function diffObjects(
   leftObj: ComparableRecord,
   rightObj: ComparableRecord,
+  compareFunc: CompareFunc,
   path = "",
   operations: RFC6902.Operation[] = []
 ): RFC6902.Operation[] {
@@ -32,6 +33,7 @@ export function diffObjects(
     diffUnknownValues(
       leftObj[leftKey],
       rightObj[leftKey],
+      compareFunc,
       `${path}/${leftKey}`,
       leftKey in rightObj,
       operations
