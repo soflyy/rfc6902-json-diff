@@ -18,7 +18,9 @@ export function diffArrays(
   }
 
   if (leftLen === 0) {
-    operations.push({ op: "add", path, value: rightArr });
+    for (let i = 0; i < rightArr.length; i++) {
+      operations.push({ op: "add", path: `${path}/${i}`, value: rightArr[i] });
+    }
     return operations;
   }
 

@@ -239,6 +239,17 @@ export const singleDimensionalArrayOfPrimitivesCases: DiffTestCase[] = [
   },
 
   {
+    title: "Add to empty array",
+    left: [],
+    right: [1, 2, 3],
+    expected: [
+      { op: "add", path: "/0", value: 1 },
+      { op: "add", path: "/1", value: 2 },
+      { op: "add", path: "/2", value: 3 },
+    ],
+  },
+
+  {
     left: [1, 2, 3, 4, 5, 6, 7],
     right: ["q", "q", "q", 7, 1, "b", 2, 3, 4, 5, 6, "w", "y", "d"],
     expected: [
@@ -470,7 +481,7 @@ export const objectCases: DiffTestCase[] = [
         children: [1],
       },
     },
-    expected: [{ op: "add", path: "/parent/children", value: [1] }],
+    expected: [{ op: "add", path: "/parent/children/0", value: 1 }],
   },
   {
     title: "Object overridden",
