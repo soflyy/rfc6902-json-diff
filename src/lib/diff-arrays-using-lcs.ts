@@ -1,40 +1,18 @@
 import type { ComparableArray, CompareFunc, RFC6902 } from "../types";
 import { diffUnknownValues } from "./diff-unknown-values";
-import bestSubSequence from "fast-array-diff/dist/diff/lcs";
-
-type IndexShifts = {
-  additionsIdxShift: 0;
-  removalsIdxShift: 0;
-};
+import { calcPatch } from "./util/fast-myers-diff";
 
 type RemoveOperationCandidate = {
   type: "remove";
   value: unknown;
-  targetArrayIdx: number;
-  sourceArrayRemovalBatch: {
-    startIdx: number;
-    length: number;
-    lengthShift: number;
-  };
   sourceArrayRemovalBatchPosition: number;
-  sourceArrayIdx: number;
   totalShiftedIdx: number;
-
-  indexShifts: IndexShifts;
 };
+
 type AddOperationCandidate = {
   type: "add";
   value: unknown;
-  targetArrayIdx: number;
-  sourceArrayAdditionBatch: {
-    startIdx: number;
-    length: number;
-  };
-  sourceArrayAdditionBatchPosition: number;
-  sourceArrayIdx: number;
   totalShiftedIdx: number;
-
-  indexShifts: IndexShifts;
 };
 
 type OperationCandidate =
@@ -53,14 +31,6 @@ type OperationCandidate =
       toShiftedIdx: number;
     };
 
-type LCSChange = {
-  type: "add" | "remove" | "same";
-  oldStart: number;
-  oldEnd: number;
-  newStart: number;
-  newEnd: number;
-};
-
 export function diffArraysUsingLcs(
   leftArr: ComparableArray,
   rightArr: ComparableArray,
@@ -78,131 +48,53 @@ export function diffArraysUsingLcs(
     detectMoveOperations
   );
 }
-
-function mapLcsChangesToOperationCandidates<T>(
-  changes: LCSChange[],
-  leftArr: T[],
-  rightArr: T[],
-  indexShifts: IndexShifts
-) {
-  const operationCandidates: OperationCandidate[] = [];
-
-  for (const change of changes) {
-    if (change.type === "remove") {
-      const leftArrayItemsToRemove = leftArr.slice(
-        change.oldStart,
-        change.oldEnd
-      );
-
-      const sourceArrayRemovalBatch: RemoveOperationCandidate["sourceArrayRemovalBatch"] =
-        {
-          startIdx: change.oldStart,
-          length: leftArrayItemsToRemove.length,
-          lengthShift: 0,
-        };
-
-      for (const [i, leftArrItemToRemove] of leftArrayItemsToRemove.entries()) {
-        const targetArrayIdx = change.newStart + i;
-
-        const sourceArrayIdx = change.oldStart + i;
-        const totalShiftedIdx =
-          sourceArrayIdx +
-          indexShifts.additionsIdxShift -
-          indexShifts.removalsIdxShift +
-          i;
-
-        operationCandidates.push({
-          type: "remove",
-          value: leftArrItemToRemove,
-          targetArrayIdx,
-          sourceArrayRemovalBatch,
-          sourceArrayRemovalBatchPosition: i,
-          sourceArrayIdx,
-          totalShiftedIdx,
-          indexShifts: { ...indexShifts },
-        });
-        indexShifts.removalsIdxShift++;
-      }
-    } else if (change.type === "add") {
-      const rightArrayItemsToAdd = rightArr.slice(
-        change.newStart,
-        change.newEnd
-      );
-
-      const sourceArrayAdditionBatch: AddOperationCandidate["sourceArrayAdditionBatch"] =
-        {
-          startIdx: change.oldStart,
-          length: rightArrayItemsToAdd.length,
-        };
-
-      for (const [i, rightArrItemToAdd] of rightArrayItemsToAdd.entries()) {
-        const targetArrayIdx = change.newStart + i;
-
-        const sourceArrayIdx = change.oldStart + i;
-        const totalShiftedIdx =
-          sourceArrayIdx +
-          indexShifts.additionsIdxShift -
-          indexShifts.removalsIdxShift -
-          i;
-
-        operationCandidates.push({
-          type: "add",
-          value: rightArrItemToAdd,
-          targetArrayIdx,
-          sourceArrayAdditionBatch,
-          sourceArrayAdditionBatchPosition: i,
-          sourceArrayIdx,
-          totalShiftedIdx,
-          indexShifts: { ...indexShifts },
-        });
-        indexShifts.additionsIdxShift++;
-      }
-    }
-  }
-  return operationCandidates;
-}
-
-function mapOperationCandidatesToOperations<T>(
+function mapOperationCandidatesToOperations(
   operationCandidates: OperationCandidate[],
   outputOperations: RFC6902.Operation[],
   path: string,
   compareFunc: CompareFunc,
-  leftArr: T[],
   shouldDetectMoveOperations: boolean
 ) {
   for (const candidate of operationCandidates) {
-    if (candidate.type === "remove") {
-      const removalIdx =
-        candidate.totalShiftedIdx -
-        candidate.sourceArrayRemovalBatchPosition -
-        candidate.sourceArrayRemovalBatch.lengthShift;
+    switch (candidate.type) {
+      case "add": {
+        outputOperations.push({
+          op: "add",
+          path: `${path}/${candidate.totalShiftedIdx}`,
+          value: candidate.value,
+        });
+        break;
+      }
+      case "remove": {
+        const removalIdx =
+          candidate.totalShiftedIdx - candidate.sourceArrayRemovalBatchPosition;
 
-      outputOperations.push({
-        op: "remove",
-        path: `${path}/${removalIdx}`,
-      });
-    } else if (candidate.type === "add") {
-      outputOperations.push({
-        op: "add",
-        path: `${path}/${candidate.totalShiftedIdx}`,
-        value: candidate.value,
-      });
-    } else if (candidate.type === "move") {
-      outputOperations.push({
-        op: "move",
-        path: `${path}/${candidate.toShiftedIdx}`,
-        from: `${path}/${candidate.fromShiftedIdx}`,
-      });
-    } else if (candidate.type === "replace") {
-      diffUnknownValues(
-        leftArr[candidate.shiftedIdx],
-        candidate.value,
-        compareFunc,
-        `${path}/${candidate.shiftedIdx}`,
-        true,
-        outputOperations,
-        shouldDetectMoveOperations
-      );
+        outputOperations.push({
+          op: "remove",
+          path: `${path}/${removalIdx}`,
+        });
+        break;
+      }
+      case "replace": {
+        diffUnknownValues(
+          candidate.removedValue,
+          candidate.value,
+          compareFunc,
+          `${path}/${candidate.shiftedIdx}`,
+          true,
+          outputOperations,
+          shouldDetectMoveOperations
+        );
+        break;
+      }
+      case "move": {
+        outputOperations.push({
+          op: "move",
+          path: `${path}/${candidate.toShiftedIdx}`,
+          from: `${path}/${candidate.fromShiftedIdx}`,
+        });
+        break;
+      }
     }
   }
 }
@@ -215,87 +107,106 @@ export function getLcsBasedOperations<T>(
   outputOperations: RFC6902.Operation[] = [],
   shouldDetectMoveOperations = false
 ): RFC6902.Operation[] {
-  let lcsLength = -1;
-
   const operationCandidates: OperationCandidate[] = [];
 
-  // const batchOfChanges: LCSChange[] = [];
-  const batchAdditionChanges: LCSChange[] = [];
-  const batchRemovalChanges: LCSChange[] = [];
+  const fastMyersDiffIterator = calcPatch(leftArr, rightArr, (l, r) =>
+    compareFunc(leftArr[l], rightArr[r])
+  );
 
-  const indexShifts: IndexShifts = {
-    additionsIdxShift: 0,
-    removalsIdxShift: 0,
-  };
+  // console.log(
+  //   "lcs",
+  //   Array.from(
+  //     lcs(leftArr, rightArr, (l, r) => compareFunc(leftArr[l], rightArr[r]))
+  //   )
+  // );
 
-  function pushChange(
-    type: "add" | "remove" | "same",
-    _oldArr: T[],
-    oldStart: number,
-    oldEnd: number,
-    _newArr: T[],
-    newStart: number,
-    newEnd: number
-  ) {
-    const change: LCSChange = {
-      type,
-      oldStart,
-      oldEnd,
-      newStart,
-      newEnd,
-    };
+  let totalRemovalsCount = 0;
+  let totalAdditionsCount = 0;
 
-    if (type === "same") {
-      lcsLength += 1 + (change.oldEnd - change.oldStart);
+  let lcsLength = 0;
+  let lcsI = 0;
 
-      const batchOfChanges: LCSChange[] = [
-        ...batchRemovalChanges,
-        ...batchAdditionChanges,
-      ];
-      if (batchOfChanges.length === 0) {
-        return;
-      }
+  for (const diffEntry of fastMyersDiffIterator) {
+    let [deleteStart, deleteEnd] = diffEntry;
+    const [, , insert] = diffEntry;
 
-      const batchOperationCandidates = mapLcsChangesToOperationCandidates(
-        batchOfChanges,
-        leftArr,
-        rightArr,
-        indexShifts
-      );
+    deleteStart += totalAdditionsCount - totalRemovalsCount;
+    deleteEnd += totalAdditionsCount - totalRemovalsCount;
 
-      detectReplaceOperations(batchOperationCandidates);
-
-      operationCandidates.push(...batchOperationCandidates);
-
-      batchAdditionChanges.splice(0);
-      batchRemovalChanges.splice(0);
-    } else if (type === "add") {
-      batchAdditionChanges.push(change);
-    } else if (type === "remove") {
-      if (batchAdditionChanges.length > 0) {
-        for (const addChange of batchAdditionChanges) {
-          addChange.oldStart += change.oldEnd - change.oldStart;
-        }
-
-        change.newStart -= change.oldEnd - change.oldStart;
-      }
-
-      batchRemovalChanges.push(change);
+    if (lcsI !== deleteStart) {
+      lcsLength += deleteStart - lcsI;
     }
+    lcsI = deleteEnd;
+
+    let batchAdditionsCount = 0;
+    let batchRemovalsCount = 0;
+
+    let insertIdxShift = 0;
+    for (
+      let i = 0, deletePos = deleteStart;
+      deletePos < deleteEnd;
+      i++, deletePos++
+    ) {
+      if (insert[i] === undefined) {
+        // pure removal
+        operationCandidates.push({
+          type: "remove",
+          value: leftArr[deletePos],
+          totalShiftedIdx: deletePos,
+          sourceArrayRemovalBatchPosition: batchRemovalsCount,
+        });
+        batchRemovalsCount++;
+      } else {
+        // replace
+        operationCandidates.push({
+          type: "replace",
+          value: insert[i],
+          shiftedIdx: deletePos,
+          removedValue: leftArr[deletePos],
+        });
+        insertIdxShift++;
+      }
+    }
+
+    for (let i = insertIdxShift; i < insert.length; i++) {
+      operationCandidates.push({
+        type: "add",
+        value: insert[i],
+        totalShiftedIdx: deleteStart + i,
+      });
+      batchAdditionsCount++;
+    }
+
+    totalAdditionsCount += batchAdditionsCount;
+    totalRemovalsCount += batchRemovalsCount;
   }
 
-  bestSubSequence(leftArr, rightArr, compareFunc, pushChange);
+  if (lcsI < leftArr.length) {
+    lcsLength += leftArr.length - lcsI;
+  }
 
-  pushChange("same", [], 0, 0, [], 0, 0);
-
-  if (lcsLength <= 0) {
-    outputOperations.push({ op: "replace", path, value: rightArr });
-
+  // console.log({
+  //   leftArr,
+  //   rightArr,
+  //   lcsLength,
+  //   operationCandidates,
+  // });
+  if (lcsLength < 1) {
+    outputOperations.push({
+      op: "replace",
+      path,
+      value: rightArr,
+    });
     return outputOperations;
   }
 
+  // console.log({ operationCandidates });
+  // const batchOfChanges: LCSChange[] = [];
+  // const batchAdditionChanges: LCSChange[] = [];
+  // const batchRemovalChanges: LCSChange[] = [];
+
   if (shouldDetectMoveOperations) {
-    detectMoveOperations(operationCandidates, compareFunc);
+    // detectMoveOperations(operationCandidates, compareFunc);
   }
 
   mapOperationCandidatesToOperations(
@@ -303,115 +214,76 @@ export function getLcsBasedOperations<T>(
     outputOperations,
     path,
     compareFunc,
-    leftArr,
     shouldDetectMoveOperations
   );
+
+  // console.log({
+  //   leftArr,
+  //   rightArr,
+  //   lcsLength,
+  //   operationCandidates,
+  //   outputOperations,
+  // });
 
   return outputOperations;
 }
 
-function detectReplaceOperations(candidates: OperationCandidate[]) {
-  for (let i = candidates.length - 1; i >= 0; i--) {
-    if (candidates[i].type !== "add" && candidates[i].type !== "remove") {
-      continue;
-    }
-
-    for (let j = i - 1; j >= 0; j--) {
-      if (candidates[j].type === candidates[i].type) {
-        continue;
-      }
-      if (candidates[j].type !== "add" && candidates[j].type !== "remove") {
-        continue;
-      }
-
-      const addOperationCandidate = (
-        candidates[i].type === "add" ? candidates[i] : candidates[j]
-      ) as AddOperationCandidate;
-
-      const removeOperationCandidate = (
-        candidates[i].type === "remove" ? candidates[i] : candidates[j]
-      ) as RemoveOperationCandidate;
-
-      const isValidReplaceMatch =
-        addOperationCandidate.targetArrayIdx ===
-        removeOperationCandidate.sourceArrayIdx;
-
-      if (!isValidReplaceMatch) {
-        continue;
-      }
-
-      removeOperationCandidate.sourceArrayRemovalBatch.lengthShift--;
-
-      candidates[j] = {
-        type: "replace",
-        value: addOperationCandidate.value,
-        removedValue: removeOperationCandidate.value,
-        shiftedIdx: removeOperationCandidate.sourceArrayIdx,
-      };
-
-      candidates.splice(i, 1);
-
-      break;
-    }
-  }
-}
-
-function detectMoveOperations(
-  candidates: OperationCandidate[],
-  compareFunc: CompareFunc
-) {
-  for (let i = candidates.length - 1; i >= 0; i--) {
-    const candidateI = candidates[i];
-
-    if (candidateI.type !== "add" && candidateI.type !== "remove") {
-      continue;
-    }
-
-    const candidateITotalIndexShift =
-      candidateI.indexShifts.additionsIdxShift -
-      candidateI.indexShifts.removalsIdxShift;
-
-    for (let j = i - 1; j >= 0; j--) {
-      const candidateJ = candidates[j];
-
-      if (candidateJ.type === candidateI.type) {
-        continue;
-      }
-      if (candidateJ.type !== "add" && candidateJ.type !== "remove") {
-        continue;
-      }
-      if (!compareFunc(candidateI.value, candidateJ.value)) {
-        continue;
-      }
-
-      const addOperationCandidate = (
-        candidateI.type === "add" ? candidateI : candidateJ
-      ) as AddOperationCandidate;
-
-      const removeOperationCandidate = (
-        candidateI.type === "remove" ? candidateI : candidateJ
-      ) as RemoveOperationCandidate;
-
-      const candidateJTotalIndexShift =
-        candidateJ.indexShifts.additionsIdxShift -
-        candidateJ.indexShifts.removalsIdxShift;
-
-      const fromIdxShift =
-        candidateITotalIndexShift - candidateJTotalIndexShift;
-
-      candidates[j] = {
-        type: "move",
-        fromShiftedIdx:
-          removeOperationCandidate.totalShiftedIdx >
-          addOperationCandidate.totalShiftedIdx
-            ? removeOperationCandidate.totalShiftedIdx - fromIdxShift
-            : removeOperationCandidate.totalShiftedIdx,
-        toShiftedIdx: addOperationCandidate.totalShiftedIdx,
-        value: addOperationCandidate.value,
-      };
-      candidates.splice(i, 1);
-
-      break;
-    }
-  }
-}
+// function detectMoveOperations(
+//   candidates: OperationCandidate[],
+//   compareFunc: CompareFunc
+// ) {
+//   for (let i = candidates.length - 1; i >= 0; i--) {
+//     const candidateI = candidates[i];
+//
+//     if (candidateI.type !== "add" && candidateI.type !== "remove") {
+//       continue;
+//     }
+//
+//     const candidateITotalIndexShift =
+//       candidateI.indexShifts.additionsIdxShift -
+//       candidateI.indexShifts.removalsIdxShift;
+//
+//     for (let j = i - 1; j >= 0; j--) {
+//       const candidateJ = candidates[j];
+//
+//       if (candidateJ.type === candidateI.type) {
+//         continue;
+//       }
+//       if (candidateJ.type !== "add" && candidateJ.type !== "remove") {
+//         continue;
+//       }
+//       if (!compareFunc(candidateI.value, candidateJ.value)) {
+//         continue;
+//       }
+//
+//       const addOperationCandidate = (
+//         candidateI.type === "add" ? candidateI : candidateJ
+//       ) as AddOperationCandidate;
+//
+//       const removeOperationCandidate = (
+//         candidateI.type === "remove" ? candidateI : candidateJ
+//       ) as RemoveOperationCandidate;
+//
+//       const candidateJTotalIndexShift =
+//         candidateJ.indexShifts.additionsIdxShift -
+//         candidateJ.indexShifts.removalsIdxShift;
+//
+//       const fromIdxShift =
+//         candidateITotalIndexShift - candidateJTotalIndexShift;
+//
+//       candidates[j] = {
+//         type: "move",
+//         fromShiftedIdx:
+//           removeOperationCandidate.totalShiftedIdx >
+//           addOperationCandidate.totalShiftedIdx
+//             ? removeOperationCandidate.totalShiftedIdx - fromIdxShift
+//             : removeOperationCandidate.totalShiftedIdx,
+//         toShiftedIdx: addOperationCandidate.totalShiftedIdx,
+//         value: addOperationCandidate.value,
+//       };
+//       candidates.splice(i, 1);
+//
+//       break;
+//     }
+//   }
+// }
