@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "RFC6902-compliant JSON diff generator",
   "main": "./dist/index.js",
-  "type": "module",
   "scripts": {
     "prebuild-checks": "npm-run-all -c tsc-lint lint",
-    "build": "tsup src/index.ts --dts --format cjs,esm --minify --treeshake --target es2020k",
+    "build": "tsup src/index.ts --dts --format cjs --minify --treeshake --target es6",
     "test": "ava",
     "tsc-lint": "tsc --noEmit",
     "lint": "eslint ./src"
