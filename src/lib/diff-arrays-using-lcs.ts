@@ -4,9 +4,9 @@ import { calcPatch } from "./util/fast-myers-diff";
 
 type RemoveOperationCandidate = {
   type: "remove";
-  value: unknown;
+  sourceArrayRemovalBatchStartIdx: number;
   sourceArrayRemovalBatchPosition: number;
-  totalShiftedIdx: number;
+  shiftedIdx: number;
 };
 
 type AddOperationCandidate = {
@@ -67,7 +67,7 @@ function mapOperationCandidatesToOperations(
       }
       case "remove": {
         const removalIdx =
-          candidate.totalShiftedIdx - candidate.sourceArrayRemovalBatchPosition;
+          candidate.shiftedIdx - candidate.sourceArrayRemovalBatchPosition;
 
         outputOperations.push({
           op: "remove",
@@ -113,13 +113,6 @@ export function getLcsBasedOperations<T>(
     compareFunc(leftArr[l], rightArr[r])
   );
 
-  // console.log(
-  //   "lcs",
-  //   Array.from(
-  //     lcs(leftArr, rightArr, (l, r) => compareFunc(leftArr[l], rightArr[r]))
-  //   )
-  // );
-
   let totalRemovalsCount = 0;
   let totalAdditionsCount = 0;
 
@@ -129,6 +122,8 @@ export function getLcsBasedOperations<T>(
   for (const diffEntry of fastMyersDiffIterator) {
     let [deleteStart, deleteEnd] = diffEntry;
     const [, , insert] = diffEntry;
+
+    const sourceArrayRemovalBatchStartIdx = deleteStart;
 
     deleteStart += totalAdditionsCount - totalRemovalsCount;
     deleteEnd += totalAdditionsCount - totalRemovalsCount;
@@ -151,8 +146,8 @@ export function getLcsBasedOperations<T>(
         // pure removal
         operationCandidates.push({
           type: "remove",
-          value: leftArr[deletePos],
-          totalShiftedIdx: deletePos,
+          shiftedIdx: deletePos,
+          sourceArrayRemovalBatchStartIdx,
           sourceArrayRemovalBatchPosition: batchRemovalsCount,
         });
         batchRemovalsCount++;
@@ -162,7 +157,7 @@ export function getLcsBasedOperations<T>(
           type: "replace",
           value: insert[i],
           shiftedIdx: deletePos,
-          removedValue: leftArr[deletePos],
+          removedValue: leftArr[sourceArrayRemovalBatchStartIdx + i],
         });
         insertIdxShift++;
       }
@@ -185,12 +180,6 @@ export function getLcsBasedOperations<T>(
     lcsLength += leftArr.length - lcsI;
   }
 
-  // console.log({
-  //   leftArr,
-  //   rightArr,
-  //   lcsLength,
-  //   operationCandidates,
-  // });
   if (lcsLength < 1) {
     outputOperations.push({
       op: "replace",
@@ -200,13 +189,8 @@ export function getLcsBasedOperations<T>(
     return outputOperations;
   }
 
-  // console.log({ operationCandidates });
-  // const batchOfChanges: LCSChange[] = [];
-  // const batchAdditionChanges: LCSChange[] = [];
-  // const batchRemovalChanges: LCSChange[] = [];
-
   if (shouldDetectMoveOperations) {
-    // detectMoveOperations(operationCandidates, compareFunc);
+    detectMoveOperations(operationCandidates, compareFunc, leftArr);
   }
 
   mapOperationCandidatesToOperations(
@@ -217,73 +201,80 @@ export function getLcsBasedOperations<T>(
     shouldDetectMoveOperations
   );
 
-  // console.log({
-  //   leftArr,
-  //   rightArr,
-  //   lcsLength,
-  //   operationCandidates,
-  //   outputOperations,
-  // });
-
   return outputOperations;
 }
 
-// function detectMoveOperations(
-//   candidates: OperationCandidate[],
-//   compareFunc: CompareFunc
-// ) {
-//   for (let i = candidates.length - 1; i >= 0; i--) {
-//     const candidateI = candidates[i];
-//
-//     if (candidateI.type !== "add" && candidateI.type !== "remove") {
-//       continue;
-//     }
-//
-//     const candidateITotalIndexShift =
-//       candidateI.indexShifts.additionsIdxShift -
-//       candidateI.indexShifts.removalsIdxShift;
-//
-//     for (let j = i - 1; j >= 0; j--) {
-//       const candidateJ = candidates[j];
-//
-//       if (candidateJ.type === candidateI.type) {
-//         continue;
-//       }
-//       if (candidateJ.type !== "add" && candidateJ.type !== "remove") {
-//         continue;
-//       }
-//       if (!compareFunc(candidateI.value, candidateJ.value)) {
-//         continue;
-//       }
-//
-//       const addOperationCandidate = (
-//         candidateI.type === "add" ? candidateI : candidateJ
-//       ) as AddOperationCandidate;
-//
-//       const removeOperationCandidate = (
-//         candidateI.type === "remove" ? candidateI : candidateJ
-//       ) as RemoveOperationCandidate;
-//
-//       const candidateJTotalIndexShift =
-//         candidateJ.indexShifts.additionsIdxShift -
-//         candidateJ.indexShifts.removalsIdxShift;
-//
-//       const fromIdxShift =
-//         candidateITotalIndexShift - candidateJTotalIndexShift;
-//
-//       candidates[j] = {
-//         type: "move",
-//         fromShiftedIdx:
-//           removeOperationCandidate.totalShiftedIdx >
-//           addOperationCandidate.totalShiftedIdx
-//             ? removeOperationCandidate.totalShiftedIdx - fromIdxShift
-//             : removeOperationCandidate.totalShiftedIdx,
-//         toShiftedIdx: addOperationCandidate.totalShiftedIdx,
-//         value: addOperationCandidate.value,
-//       };
-//       candidates.splice(i, 1);
-//
-//       break;
-//     }
-//   }
-// }
+function detectMoveOperations(
+  candidates: OperationCandidate[],
+  compareFunc: CompareFunc,
+  leftArr: Array<unknown>
+) {
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const candidateI = candidates[i];
+
+    if (candidateI.type !== "add" && candidateI.type !== "remove") {
+      continue;
+    }
+
+    const candidateIValue =
+      candidateI.type === "add"
+        ? candidateI.value
+        : leftArr[
+            candidateI.sourceArrayRemovalBatchStartIdx +
+              candidateI.sourceArrayRemovalBatchPosition
+          ];
+
+    for (let j = i - 1; j >= 0; j--) {
+      const candidateJ = candidates[j];
+
+      if (candidateJ.type === candidateI.type) {
+        continue;
+      }
+      if (candidateJ.type !== "add" && candidateJ.type !== "remove") {
+        continue;
+      }
+
+      const candidateJValue =
+        candidateJ.type === "add"
+          ? candidateJ.value
+          : leftArr[
+              candidateJ.sourceArrayRemovalBatchStartIdx +
+                candidateJ.sourceArrayRemovalBatchPosition
+            ];
+
+      if (!compareFunc(candidateIValue, candidateJValue)) {
+        continue;
+      }
+
+      const addOperationCandidate = (
+        candidateI.type === "add" ? candidateI : candidateJ
+      ) as AddOperationCandidate;
+
+      const removeOperationCandidate = (
+        candidateI.type === "remove" ? candidateI : candidateJ
+      ) as RemoveOperationCandidate;
+
+      // const candidateJTotalIndexShift =
+      //   candidateJ.indexShifts.additionsIdxShift -
+      //   candidateJ.indexShifts.removalsIdxShift;
+      //
+      // const fromIdxShift =
+      //   candidateITotalIndexShift - candidateJTotalIndexShift;
+
+      candidates[j] = {
+        type: "move",
+        fromShiftedIdx:
+          // removeOperationCandidate.totalShiftedIdx >
+          // addOperationCandidate.totalShiftedIdx
+          //   ? removeOperationCandidate.totalShiftedIdx - fromIdxShift
+          //   :
+          removeOperationCandidate.shiftedIdx,
+        toShiftedIdx: addOperationCandidate.totalShiftedIdx,
+        value: addOperationCandidate.value,
+      };
+      candidates.splice(i, 1);
+
+      break;
+    }
+  }
+}
