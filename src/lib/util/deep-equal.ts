@@ -69,5 +69,6 @@ export function deepEqual(foo: unknown, bar: unknown): boolean {
     }
   }
 
+  // only true when foo and bar are both NaN
   return foo !== foo && bar !== bar;
 }
