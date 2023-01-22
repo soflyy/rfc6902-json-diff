@@ -9,26 +9,18 @@ export function diffArrays(
   path = "",
   operations: RFC6902.Operation[] = [],
   detectMoveOperations = false
-): RFC6902.Operation[] {
+): void {
   const leftLen = leftArr.length;
   const rightLen = rightArr.length;
 
-  if (leftLen === 0 && rightLen === 0) {
-    return operations;
-  }
-
   if (leftLen === 0) {
-    operations.push({ op: "add", path, value: rightArr });
-    return operations;
-  }
-
-  if (rightLen === 0) {
+    for (let i = 0; i < rightLen; i++) {
+      operations.push({ op: "add", path: `${path}/${i}`, value: rightArr[i] });
+    }
+  } else if (rightLen === 0) {
     operations.push({ op: "replace", path, value: rightArr });
-    return operations;
-  }
-
-  if (leftLen === 1 && rightLen === 1) {
-    return diffUnknownValues(
+  } else if (leftLen === 1 && rightLen === 1) {
+    diffUnknownValues(
       leftArr[0],
       rightArr[0],
       compareFunc,
@@ -36,14 +28,14 @@ export function diffArrays(
       true,
       operations
     );
+  } else {
+    diffArraysUsingLcs(
+      leftArr,
+      rightArr,
+      compareFunc,
+      path,
+      operations,
+      detectMoveOperations
+    );
   }
-
-  return diffArraysUsingLcs(
-    leftArr,
-    rightArr,
-    compareFunc,
-    path,
-    operations,
-    detectMoveOperations
-  );
 }

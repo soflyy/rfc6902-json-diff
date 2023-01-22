@@ -5,11 +5,11 @@ import type {
   RFC6902,
 } from "../types";
 import { diffUnknownValues } from "./diff-unknown-values";
-import equal from "fast-deep-equal";
+import { deepEqual } from "./util/deep-equal";
 
 function createCompareFunc(doCaching: boolean): CompareFunc {
   if (!doCaching) {
-    return equal;
+    return deepEqual;
   }
 
   const equalityCache = new WeakMap<object, unknown[]>();
@@ -32,7 +32,7 @@ function createCompareFunc(doCaching: boolean): CompareFunc {
         return true;
       }
 
-      const areEqual = equal(left, right);
+      const areEqual = deepEqual(left, right);
 
       if (areEqual) {
         if (equalityCache.has(left)) {
@@ -50,7 +50,7 @@ function createCompareFunc(doCaching: boolean): CompareFunc {
 
       return areEqual;
     } else {
-      return equal(left, right);
+      return deepEqual(left, right);
     }
   };
 }
@@ -62,13 +62,17 @@ export function compare(
 ): RFC6902.Operation[] {
   const compareFunc = createCompareFunc(Boolean(options.doCaching));
 
-  return diffUnknownValues(
+  const operations: RFC6902.Operation[] = [];
+
+  diffUnknownValues(
     left,
     right,
     compareFunc,
     "",
     false,
-    [],
+    operations,
     Boolean(options.detectMoveOperations)
   );
+
+  return operations;
 }

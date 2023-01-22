@@ -10,9 +10,9 @@ export function diffUnknownValues(
   rightValExists = false,
   operations: RFC6902.Operation[] = [],
   detectMoveOperations = false
-): RFC6902.Operation[] {
-  if (Object.is(leftVal, rightVal)) {
-    return operations;
+) {
+  if (leftVal === rightVal) {
+    return;
   }
 
   if (!rightValExists && leftVal !== undefined && rightVal === undefined) {
@@ -20,51 +20,43 @@ export function diffUnknownValues(
       op: "remove",
       path,
     });
-    return operations;
+    return;
   }
 
-  const leftValType = leftVal === null ? "null" : typeof leftVal;
-  const rightValType = rightVal === null ? "null" : typeof rightVal;
+  let ctor;
 
-  const leftValIsArray = leftValType === "object" && Array.isArray(leftVal);
-  const rightValIsArray = rightValType === "object" && Array.isArray(rightVal);
+  if (
+    leftVal &&
+    rightVal &&
+    (ctor = leftVal.constructor) === rightVal.constructor
+  ) {
+    if (ctor === Array) {
+      diffArrays(
+        leftVal as Array<unknown>,
+        rightVal as Array<unknown>,
+        compareFunc,
+        path,
+        operations,
+        detectMoveOperations
+      );
+      return;
+    }
 
-  if (leftValType !== rightValType || leftValIsArray !== rightValIsArray) {
-    operations.push({
-      op: "replace",
-      path,
-      value: rightVal,
-    });
-    return operations;
+    if (!ctor || typeof leftVal === "object") {
+      diffObjects(
+        leftVal as Record<number, unknown>,
+        rightVal as Record<number, unknown>,
+        compareFunc,
+        path,
+        operations
+      );
+      return;
+    }
   }
 
-  // Now that both values have the exact same type
-
-  if (leftValIsArray && rightValIsArray) {
-    diffArrays(
-      leftVal,
-      rightVal,
-      compareFunc,
-      path,
-      operations,
-      detectMoveOperations
-    );
-    return operations;
-  } else if (leftValType === "object") {
-    diffObjects(
-      leftVal as Record<number, unknown>,
-      rightVal as Record<number, unknown>,
-      compareFunc,
-      path,
-      operations
-    );
-    return operations;
-  } else {
-    operations.push({
-      op: "replace",
-      path,
-      value: rightVal,
-    });
-    return operations;
-  }
+  operations.push({
+    op: "replace",
+    path,
+    value: rightVal,
+  });
 }
