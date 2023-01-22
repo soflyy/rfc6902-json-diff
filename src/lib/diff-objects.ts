@@ -10,13 +10,16 @@ export function diffObjects(
 ): void {
   let key;
 
-  for (key in leftObj) {
+  const leftKeys = Object.keys(leftObj);
+  for (key = leftKeys.length - 1; key >= 0; key--) {
+    const leftKey = leftKeys[key];
+
     diffUnknownValues(
-      leftObj[key],
-      rightObj[key],
+      leftObj[leftKey],
+      rightObj[leftKey],
       compareFunc,
-      `${path}/${key}`,
-      key in rightObj,
+      `${path}/${leftKey}`,
+      leftKey in rightObj,
       operations
     );
   }
