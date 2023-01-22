@@ -1,35 +1,11 @@
 import type { ComparableArray, CompareFunc, RFC6902 } from "../types";
 import { diffUnknownValues } from "./diff-unknown-values";
 import { calcPatch } from "./util/fast-myers-diff";
-
-type RemoveOperationCandidate = {
-  type: "remove";
-  sourceArrayRemovalBatchStartIdx: number;
-  sourceArrayRemovalBatchPosition: number;
-  shiftedIdx: number;
-};
-
-type AddOperationCandidate = {
-  type: "add";
-  value: unknown;
-  totalShiftedIdx: number;
-};
-
-type OperationCandidate =
-  | RemoveOperationCandidate
-  | AddOperationCandidate
-  | {
-      type: "replace";
-      value: unknown;
-      removedValue: unknown;
-      shiftedIdx: number;
-    }
-  | {
-      type: "move";
-      value: unknown;
-      fromShiftedIdx: number;
-      toShiftedIdx: number;
-    };
+import type {
+  AddOperationCandidate,
+  OperationCandidate,
+  RemoveOperationCandidate,
+} from "../types/lcs";
 
 export function diffArraysUsingLcs(
   leftArr: ComparableArray,
@@ -37,76 +13,8 @@ export function diffArraysUsingLcs(
   compareFunc: CompareFunc,
   path: string = "",
   operations: RFC6902.Operation[] = [],
-  detectMoveOperations = false
-): RFC6902.Operation[] {
-  return getLcsBasedOperations(
-    leftArr,
-    rightArr,
-    compareFunc,
-    path,
-    operations,
-    detectMoveOperations
-  );
-}
-function mapOperationCandidatesToOperations(
-  operationCandidates: OperationCandidate[],
-  outputOperations: RFC6902.Operation[],
-  path: string,
-  compareFunc: CompareFunc,
-  shouldDetectMoveOperations: boolean
-) {
-  for (const candidate of operationCandidates) {
-    switch (candidate.type) {
-      case "add": {
-        outputOperations.push({
-          op: "add",
-          path: `${path}/${candidate.totalShiftedIdx}`,
-          value: candidate.value,
-        });
-        break;
-      }
-      case "remove": {
-        const removalIdx =
-          candidate.shiftedIdx - candidate.sourceArrayRemovalBatchPosition;
-
-        outputOperations.push({
-          op: "remove",
-          path: `${path}/${removalIdx}`,
-        });
-        break;
-      }
-      case "replace": {
-        diffUnknownValues(
-          candidate.removedValue,
-          candidate.value,
-          compareFunc,
-          `${path}/${candidate.shiftedIdx}`,
-          true,
-          outputOperations,
-          shouldDetectMoveOperations
-        );
-        break;
-      }
-      case "move": {
-        outputOperations.push({
-          op: "move",
-          path: `${path}/${candidate.toShiftedIdx}`,
-          from: `${path}/${candidate.fromShiftedIdx}`,
-        });
-        break;
-      }
-    }
-  }
-}
-
-export function getLcsBasedOperations<T>(
-  leftArr: T[],
-  rightArr: T[],
-  compareFunc: CompareFunc,
-  path: string,
-  outputOperations: RFC6902.Operation[] = [],
   shouldDetectMoveOperations = false
-): RFC6902.Operation[] {
+): void {
   const operationCandidates: OperationCandidate[] = [];
 
   const fastMyersDiffIterator = calcPatch(leftArr, rightArr, (l, r) =>
@@ -181,12 +89,12 @@ export function getLcsBasedOperations<T>(
   }
 
   if (lcsLength < 1) {
-    outputOperations.push({
+    operations.push({
       op: "replace",
       path,
       value: rightArr,
     });
-    return outputOperations;
+    return;
   }
 
   if (shouldDetectMoveOperations) {
@@ -195,13 +103,63 @@ export function getLcsBasedOperations<T>(
 
   mapOperationCandidatesToOperations(
     operationCandidates,
-    outputOperations,
+    operations,
     path,
     compareFunc,
     shouldDetectMoveOperations
   );
+}
 
-  return outputOperations;
+function mapOperationCandidatesToOperations(
+  operationCandidates: OperationCandidate[],
+  outputOperations: RFC6902.Operation[],
+  path: string,
+  compareFunc: CompareFunc,
+  shouldDetectMoveOperations: boolean
+) {
+  for (let i = 0; i < operationCandidates.length; i++) {
+    const candidate = operationCandidates[i];
+    switch (candidate.type) {
+      case "add": {
+        outputOperations.push({
+          op: "add",
+          path: `${path}/${candidate.totalShiftedIdx}`,
+          value: candidate.value,
+        });
+        break;
+      }
+      case "remove": {
+        const removalIdx =
+          candidate.shiftedIdx - candidate.sourceArrayRemovalBatchPosition;
+
+        outputOperations.push({
+          op: "remove",
+          path: `${path}/${removalIdx}`,
+        });
+        break;
+      }
+      case "replace": {
+        diffUnknownValues(
+          candidate.removedValue,
+          candidate.value,
+          compareFunc,
+          `${path}/${candidate.shiftedIdx}`,
+          true,
+          outputOperations,
+          shouldDetectMoveOperations
+        );
+        break;
+      }
+      case "move": {
+        outputOperations.push({
+          op: "move",
+          path: `${path}/${candidate.toShiftedIdx}`,
+          from: `${path}/${candidate.fromShiftedIdx}`,
+        });
+        break;
+      }
+    }
+  }
 }
 
 function detectMoveOperations(

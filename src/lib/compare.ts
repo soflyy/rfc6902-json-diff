@@ -62,13 +62,17 @@ export function compare(
 ): RFC6902.Operation[] {
   const compareFunc = createCompareFunc(Boolean(options.doCaching));
 
-  return diffUnknownValues(
+  const operations: RFC6902.Operation[] = [];
+
+  diffUnknownValues(
     left,
     right,
     compareFunc,
     "",
     false,
-    [],
+    operations,
     Boolean(options.detectMoveOperations)
   );
+
+  return operations;
 }
